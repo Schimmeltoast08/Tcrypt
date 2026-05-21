@@ -5,11 +5,15 @@ It has nearly unbreakable encryption, but it only works on files which only have
 
 ## Install (Linux-only)
 ```
+git clone https://github.com/Schimmeltoast08/Tcrypt.git
+cd Tcrypt
 sudo bash install.sh
 ```
 
 ## Portable (Windows)
 ```
+git clone https://github.com/Schimmeltoast08/Tcrypt.git
+cd Tcrypt
 java -jar tcrypt.jar
 ```
 
@@ -18,7 +22,7 @@ To use tcrypt, first initiate the live tcrypt application by typing
 ```
 tcrypt
 ```
-. To encrypt a file, write
+To encrypt a file, write
 ```
 E [filename]
 ```
