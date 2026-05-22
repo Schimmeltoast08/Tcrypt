@@ -126,7 +126,7 @@ static void decryptFile(String filepath, String keypath){
         String encryptedFile = "";
         while ((fileLine = fileReader.readLine()) != null){
             encryptedFile += fileLine;
-        
+        }
         
         String keyFile = "";
         
@@ -188,7 +188,7 @@ static void decryptFile(String filepath, String keypath){
 
         IO.println("Decryption complete!");
         } catch (Exception f){IO.print(f);}
-        }     
+             
 
 
     } catch (Exception e){IO.print(e);}
