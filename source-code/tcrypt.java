@@ -54,6 +54,7 @@ static void encryptFile(String filepath){
         ArrayList<String> sourceFile = new ArrayList<>();
         while ((sourceFileLine = sourceFileReader.readLine()) != null){
             sourceFile.add(sourceFileLine);
+            sourceFile.add("\n");
         }
         //
         String productBinaryString = "";

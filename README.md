@@ -1,7 +1,7 @@
 # Tcrypt
 Tcrypt is a simple encryption tool that is very simple, yet very strong.
-It has nearly unbreakable encryption, but it only works on files which only have one single line of text in them
-(to specify: you can encrypt any file, but when decrypted, it gets turned into a one line file)
+It has nearly unbreakable encryption thanks to the XOR Process, but it is slow and generates a key file!
+To decrypt the message, you must safely send someone the decryption key, which is the main limiting factor.**Do not use for any important Communication**
 
 ## Install (Linux-only)
 ```
