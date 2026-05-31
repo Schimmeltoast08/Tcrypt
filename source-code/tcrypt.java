@@ -20,8 +20,15 @@ public class tcrypt{
                 doExit = true;
             }
             if (prompt.toLowerCase().startsWith("help")){
-                IO.println("D     Decrypt\nE     Encrypt\nQ     Exit");
+                IO.println("D     Decrypt\nE     Encrypt\nG     Gui\nQ     Exit");
             }
+
+            if (prompt.toLowerCase().startsWith("g")){
+                MyFrame myFrame = new MyFrame(true);
+
+            }
+
+            
 
             if (prompt.toLowerCase().startsWith("e")){
                 encryptFile((prompt.substring(prompt.indexOf(" ") + 1)));
