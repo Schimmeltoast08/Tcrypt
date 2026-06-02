@@ -40,5 +40,12 @@ If you rather like graphical applications, you can run
 tcrypt --gui
 ```
 or hit "g" once you are in the cli
+
+On top of that, you can also call functions directly. Example:
+```
+tcrypt --encrypt [file]
+tcrypt --decrypt [.tcrt] [.tkey]
+tcrypt --help
+```
 ### Contributions
 Any contributor is welcome to fork this repository or to improve upond it so long as you comply with the License file.
