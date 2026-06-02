@@ -34,5 +34,11 @@ D [.tcrt file] [.tkey file]
 This generates a .tmsg file, which is simply the original file, but with an extra extension as to not accidentally overwrite existing files.
 To quit Tcrypt, type q or exit.
 
+## Alternatively
+If you rather like graphical applications, you can run 
+```
+tcrypt --gui
+```
+or hit "g" once you are in the cli
 ### Contributions
 Any contributor is welcome to fork this repository or to improve upond it so long as you comply with the License file.

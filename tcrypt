@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-java -jar /opt/tcrypt/tcrypt.jar
+java -jar /opt/tcrypt/tcrypt.jar $1
