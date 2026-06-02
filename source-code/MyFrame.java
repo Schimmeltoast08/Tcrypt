@@ -11,6 +11,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
+import javax.swing.JLabel;
+import javax.swing.JComponent;
 
 public class MyFrame extends JFrame implements ActionListener {
     
@@ -21,6 +23,12 @@ public class MyFrame extends JFrame implements ActionListener {
 
     JRadioButton encryptRadioButton;
     JRadioButton decryptRadioButton;
+
+    JLabel fileSelectedLabel;
+    JLabel keySelectedLabel;
+    JLabel filePathLabel;
+    JLabel keyPathLabel;
+
     Font font = new Font("Arial", Font.PLAIN, 20);
 
 
@@ -28,6 +36,7 @@ public class MyFrame extends JFrame implements ActionListener {
     boolean doExitForRunnable = false;
     File keyFile;
     File file;
+
 
     MyFrame(boolean encryptionMode){
        this.encryptionMode = encryptionMode;
@@ -95,6 +104,33 @@ public class MyFrame extends JFrame implements ActionListener {
 
     //
 
+    // File Selected Label
+    fileSelectedLabel = new JLabel("<html><font color='green'>File selected:</font></html>");
+    fileSelectedLabel.setBounds(230,90,200,50);
+    fileSelectedLabel.setFont(font);
+
+    //
+
+    // Key Selected Label
+    keySelectedLabel = new JLabel("<html><font color='green'>Key selected:</font></html>");
+    keySelectedLabel.setBounds(230,150,200,50);
+    keySelectedLabel.setFont(font);
+
+    //
+
+    // FilePath Label
+    filePathLabel = new JLabel();
+    filePathLabel.setBounds(400,90,350,50);
+    filePathLabel.setFont(font);
+
+    //
+
+    // KeyPath Label
+    keyPathLabel = new JLabel();
+    keyPathLabel.setBounds(400,150,350,50);
+    keyPathLabel.setFont(font);
+
+    //
 
     // add-stack
     this.add(exitButton);
@@ -110,6 +146,9 @@ public class MyFrame extends JFrame implements ActionListener {
     this.add(encryptRadioButton);
     this.add(decryptRadioButton);
 
+
+        revalidate();
+        repaint();
     }
 
 
@@ -133,12 +172,12 @@ public class MyFrame extends JFrame implements ActionListener {
 
         if (e.getSource() == decryptRadioButton){
             encryptionMode = false;
-            showFileChooserButton();
+            showElement(fileChooserButton2);
         }
 
         if (e.getSource() == encryptRadioButton){
             encryptionMode = true;
-            hideFileChooserButton();
+            hideElement(fileChooserButton2);
         }
 
         if (e.getSource() == fileChooserButton){
@@ -148,6 +187,9 @@ public class MyFrame extends JFrame implements ActionListener {
 
             if (fileChooserExitCode == JFileChooser.APPROVE_OPTION){ // same as the integer '0' but more clear
                 file = new File(fileChooser.getSelectedFile().getAbsolutePath());
+                showElement(fileSelectedLabel);
+                setElementText(filePathLabel, file.getName());
+                showElement(filePathLabel);
             }
         }
 
@@ -158,28 +200,35 @@ public class MyFrame extends JFrame implements ActionListener {
 
             if (fileChooserExitCode == JFileChooser.APPROVE_OPTION){
                 keyFile = new File(fileChooser.getSelectedFile().getAbsolutePath());
+                showElement(keySelectedLabel);
+                setElementText(keyPathLabel, keyFile.getName());
+                showElement(keyPathLabel);
+                
             }
         }
 
         if (e.getSource() == submitButton){
             try{
-                if (encryptionMode){
-                    //String path = file.getPath();
-                    //Path basedir = Paths.get(System.getProperty("user.dir"));
-                    tcrypt.encryptFile(file.getAbsolutePath()/*.toString()*/);
-                    IO.println(file.getAbsolutePath());
-                    JOptionPane.showMessageDialog(null, "File Encrypted");
-
+                if (file == null){
+                    JOptionPane.showMessageDialog(null, "Please select a file");
                 } else {
-                    //String path1 = file.getPath();
-                   // String keyPath = keyFile.getPath();
-                    //Path basedir = Paths.get(System.getProperty("user.dir"));
-                    tcrypt.decryptFile(file.getAbsolutePath()/*.toString()*/, keyFile.getAbsolutePath()/*.toString()*/);
-                    IO.println(file.getAbsolutePath() + " " + keyFile.getAbsolutePath());
-                    JOptionPane.showMessageDialog(null, "File Decrypted");
+                    if (encryptionMode){
+
+                        tcrypt.encryptFile(file.getAbsolutePath());
+                        JOptionPane.showMessageDialog(null, "File Encrypted");
+
+                    } else {
+                        if (keyFile == null){
+                            JOptionPane.showMessageDialog(null, "Please select a key");
+                        } else {
+
+                            tcrypt.decryptFile(file.getAbsolutePath(), keyFile.getAbsolutePath());
+                            JOptionPane.showMessageDialog(null, "File Decrypted");
+                        }
+                    }
                 }
             }
-            catch (Exception f){
+                        catch (Exception f){
             IO.println(f);
             JOptionPane.showMessageDialog(null, "Error at File Operation " + f);
             
@@ -188,16 +237,28 @@ public class MyFrame extends JFrame implements ActionListener {
 
     }
 
-    public void showFileChooserButton(){
-        this.add(fileChooserButton2);
-        revalidate();
-        repaint();
-    }
 
-    public void hideFileChooserButton(){
-        this.remove(fileChooserButton2);
-        revalidate();
-        repaint();
+public void showElement(JComponent element) {
+    
+    if (this.getContentPane() != element.getParent()){
+        this.add(element);
     }
+    
+    
+    revalidate();
+    repaint();
+}
+
+public void hideElement(JComponent element) {
+    this.remove(element);   
+    revalidate();
+    repaint();
+}
+
+public void setElementText(JLabel label, String text){
+    label.setText(text);
+    revalidate();
+    repaint();
+}
     
 }

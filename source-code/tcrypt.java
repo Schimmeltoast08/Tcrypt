@@ -3,13 +3,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.Scanner;
 import javax.swing.JOptionPane;
 
 public class tcrypt{
     static String key = "";
     public static void main(String[] args) {
+
+        if (args.length > 0 && args[0].equals("--gui")){
+            MyFrame myFrame = new MyFrame(true);
+        }
+
+
         boolean doExit = false;
         Scanner scanner = new Scanner(System.in);
         //repl
@@ -46,9 +52,6 @@ public class tcrypt{
             } 
 
 
-
-
-
         }
 
     }
@@ -64,16 +67,18 @@ static void encryptFile(String filepath){
             sourceFile.add("\n");
         }
         //
-        String productBinaryString = "";
+        StringBuilder productBinaryStringBuilder = new StringBuilder();
         for (String s : sourceFile){
             byte[] b = s.getBytes();
             for (byte b2 : b){
                 String binaryString = String.format("%8s", Integer.toBinaryString(b2 & 0xFF)).replace(' ', '0');
-                productBinaryString += binaryString;
+                productBinaryStringBuilder.append(binaryString);
             }
         }
+        String productBinaryString = productBinaryStringBuilder.toString();
+        
         //
-        Random random = new Random();
+        SecureRandom random = new SecureRandom(); // why don't they make regular random() secure?
         for (int i = 0; i < productBinaryString.length(); i++){
         key += Integer.toString(random.nextInt(2));
         }
@@ -120,6 +125,7 @@ static void encryptFile(String filepath){
 
 
     IO.println("Encryption complete!");
+    IO.print("> ");
     } catch (Exception e){
         JOptionPane.showMessageDialog(null, "Error at encrypting the file");
     }
@@ -131,10 +137,12 @@ static void encryptFile(String filepath){
 static void decryptFile(String filepath, String keypath){
     try (BufferedReader fileReader = new BufferedReader(new FileReader(filepath))){
         String fileLine;
-        String encryptedFile = "";
+
+        StringBuilder encryptedFileBuilder = new StringBuilder();
         while ((fileLine = fileReader.readLine()) != null){
-            encryptedFile += fileLine;
+            encryptedFileBuilder.append(fileLine);
         }
+        String encryptedFile = encryptedFileBuilder.toString();
         
         String keyFile = "";
         
@@ -195,6 +203,7 @@ static void decryptFile(String filepath, String keypath){
 
 
         IO.println("Decryption complete!");
+        IO.print("> ");
         } catch (Exception f){IO.print(f);}
              
 
