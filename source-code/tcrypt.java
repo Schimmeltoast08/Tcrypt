@@ -7,16 +7,19 @@ import java.security.SecureRandom;
 import java.util.Scanner;
 import javax.swing.JOptionPane;
 
+
 public class tcrypt{
     static String key = "";
     public static void main(String[] args) {
 
         if (args.length > 0 && args[0].equals("--gui")){
-            MyFrame myFrame = new MyFrame(true);
+            javax.swing.SwingUtilities.invokeLater(() -> new MyFrame(true));
+            return;
         }
 
 
         boolean doExit = false;
+        boolean doTry = true;
         Scanner scanner = new Scanner(System.in);
         //repl
         while (!doExit){
@@ -24,6 +27,7 @@ public class tcrypt{
             String prompt = scanner.nextLine();
             if (prompt.toLowerCase().startsWith("exit") || prompt.toLowerCase().startsWith("q")){
                 doExit = true;
+                doTry = false;
             }
             if (prompt.toLowerCase().startsWith("help")){
                 IO.println("D     Decrypt\nE     Encrypt\nG     Gui\nQ     Exit");
@@ -35,23 +39,24 @@ public class tcrypt{
             }
 
             
-
-            if (prompt.toLowerCase().startsWith("e")){
-                encryptFile((prompt.substring(prompt.indexOf(" ") + 1)));
-            }
-
-            if (prompt.toLowerCase().startsWith("d")){
-                try{
-                String filepath = prompt.split(" ")[1];
-                String keyPath = prompt.split(" ")[2];
-                decryptFile(filepath, keyPath);
-                } catch (ArrayIndexOutOfBoundsException e){
-                    JOptionPane.showMessageDialog(null, "Please enter 2 components:\nthe file to be decrypted and the key");
+            if (doTry){
+                if (prompt.toLowerCase().startsWith("e")){
+                    encryptFile((prompt.substring(prompt.indexOf(" ") + 1)));
                 }
 
-            } 
+                if (prompt.toLowerCase().startsWith("d")){
+                    try{
+                    String filepath = prompt.split(" ")[1];
+                    String keyPath = prompt.split(" ")[2];
+                    decryptFile(filepath, keyPath);
+                    } catch (ArrayIndexOutOfBoundsException e){
+                        JOptionPane.showMessageDialog(null, "Please enter 2 components:\nthe file to be decrypted and the key");
+                    }
+
+                } 
 
 
+            }
         }
 
     }

@@ -33,7 +33,6 @@ public class MyFrame extends JFrame implements ActionListener {
 
 
     boolean encryptionMode;
-    boolean doExitForRunnable = false;
     File keyFile;
     File file;
 
@@ -165,7 +164,6 @@ public class MyFrame extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e){
 
         if (e.getSource() == exitButton){
-            doExitForRunnable = true;
             dispose();
             
         }
