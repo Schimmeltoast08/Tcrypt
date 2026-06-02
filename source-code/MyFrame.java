@@ -14,6 +14,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JLabel;
 import javax.swing.JComponent;
 
+
 public class MyFrame extends JFrame implements ActionListener {
     
     JButton exitButton;
@@ -28,6 +29,7 @@ public class MyFrame extends JFrame implements ActionListener {
     JLabel keySelectedLabel;
     JLabel filePathLabel;
     JLabel keyPathLabel;
+
 
     Font font = new Font("Arial", Font.PLAIN, 20);
 
@@ -61,7 +63,9 @@ public class MyFrame extends JFrame implements ActionListener {
         encryptRadioButton = new JRadioButton("Encryption");
         encryptRadioButton.setBounds(0,10,200,20);
         encryptRadioButton.addActionListener(this);
+        encryptRadioButton.setSelected(true);
         encryptRadioButton.setFont(font);
+        
 
 
 
@@ -131,19 +135,19 @@ public class MyFrame extends JFrame implements ActionListener {
 
     //
 
+
+
     // add-stack
     this.add(exitButton);
 
     this.add(fileChooserButton);
 
-
     this.add(submitButton);
-
-
-
 
     this.add(encryptRadioButton);
     this.add(decryptRadioButton);
+
+
 
 
         revalidate();
@@ -211,8 +215,9 @@ public class MyFrame extends JFrame implements ActionListener {
                     JOptionPane.showMessageDialog(null, "Please select a file");
                 } else {
                     if (encryptionMode){
-
+                        //progressBar.setIndeterminate(false)
                         tcrypt.encryptFile(file.getAbsolutePath());
+                        
                         JOptionPane.showMessageDialog(null, "File Encrypted");
 
                     } else {
@@ -236,7 +241,7 @@ public class MyFrame extends JFrame implements ActionListener {
     }
 
 
-public void showElement(JComponent element) {
+private void showElement(JComponent element) {
     
     if (this.getContentPane() != element.getParent()){
         this.add(element);
@@ -247,16 +252,18 @@ public void showElement(JComponent element) {
     repaint();
 }
 
-public void hideElement(JComponent element) {
+private void hideElement(JComponent element) {
     this.remove(element);   
     revalidate();
     repaint();
 }
 
-public void setElementText(JLabel label, String text){
+private void setElementText(JLabel label, String text){
     label.setText(text);
     revalidate();
     repaint();
 }
+
+
     
 }

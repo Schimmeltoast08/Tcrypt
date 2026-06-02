@@ -17,6 +17,27 @@ public class tcrypt{
             return;
         }
 
+        if (args.length > 1 && args[0].equals("--encrypt")){
+            encryptFile(args[1]);
+            return;
+        }
+
+        if (args.length > 2 && args[0].equals("--decrypt")){
+            decryptFile(args[1], args[2]);
+            return;
+        }
+        
+
+        if (args.length > 0 && args[0].equals("--help")){
+             IO.println("""
+                    flags:
+                    --encrypt [file]          | encrypts the file\n
+                    --decrypt [.tcrt] [.tkey] | decrypts the file\n
+                    --gui                     | opens the graphical environment
+                    """);
+            return;
+        }
+
 
         boolean doExit = false;
         boolean doTry = true;
@@ -89,10 +110,10 @@ static void encryptFile(String filepath){
         }
   
 
-
+        int total = productBinaryString.length(); // for progress bar
         //
         StringBuilder result = new StringBuilder();
-        for (int i = 0; i < productBinaryString.length(); i++){
+        for (int i = 0; i < total; i++){
             if (key.charAt(i) == productBinaryString.charAt(i)){
                 result.append('0');
             } else {
@@ -100,6 +121,7 @@ static void encryptFile(String filepath){
             }
             
         }
+        
 
 
 
