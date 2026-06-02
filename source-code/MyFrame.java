@@ -215,7 +215,6 @@ public class MyFrame extends JFrame implements ActionListener {
                     JOptionPane.showMessageDialog(null, "Please select a file");
                 } else {
                     if (encryptionMode){
-                        //progressBar.setIndeterminate(false)
                         tcrypt.encryptFile(file.getAbsolutePath());
                         
                         JOptionPane.showMessageDialog(null, "File Encrypted");

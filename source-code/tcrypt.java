@@ -2,9 +2,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
-import java.security.SecureRandom;
 import java.util.Scanner;
+import java.security.SecureRandom;
 import javax.swing.JOptionPane;
 
 
@@ -84,158 +86,57 @@ public class tcrypt{
 /////////////////////////////////
 
 static void encryptFile(String filepath){
-    try(BufferedReader sourceFileReader = new BufferedReader(new FileReader(filepath))){
-        //
-        String sourceFileLine;
-        ArrayList<String> sourceFile = new ArrayList<>();
-        while ((sourceFileLine = sourceFileReader.readLine()) != null){
-            sourceFile.add(sourceFileLine);
-            sourceFile.add("\n");
-        }
-        //
-        StringBuilder productBinaryStringBuilder = new StringBuilder();
-        for (String s : sourceFile){
-            byte[] b = s.getBytes();
-            for (byte b2 : b){
-                String binaryString = String.format("%8s", Integer.toBinaryString(b2 & 0xFF)).replace(' ', '0');
-                productBinaryStringBuilder.append(binaryString);
-            }
-        }
-        String productBinaryString = productBinaryStringBuilder.toString();
-        
-        //
-        SecureRandom random = new SecureRandom(); // why don't they make regular random() secure?
-        for (int i = 0; i < productBinaryString.length(); i++){
-        key += Integer.toString(random.nextInt(2));
-        }
-  
+    try{
+    FileInputStream input = new FileInputStream(filepath);
+    byte[] fileBytes = input.readAllBytes();
+    input.close();
+//
 
-        int total = productBinaryString.length(); // for progress bar
-        //
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < total; i++){
-            if (key.charAt(i) == productBinaryString.charAt(i)){
-                result.append('0');
-            } else {
-                result.append('1');
-            }
-            
-        }
-        
+    byte[] key = new byte[fileBytes.length];
+    SecureRandom random = new SecureRandom(); 
+    random.nextBytes(key);  // populate key
+// 
+    byte[] encrypted = new byte[fileBytes.length];
 
+    for (int i = 0; i < fileBytes.length; i++){
+        encrypted[i] = (byte) (fileBytes[i] ^ key[i]);
+    }
+//
+    FileOutputStream fileOut = new FileOutputStream(filepath + ".tcrt");
+    fileOut.write(encrypted);
+    fileOut.close();
+//
+    FileOutputStream keyOut = new FileOutputStream(filepath + ".tkey");
+    keyOut.write(key);
+    keyOut.close();
+    IO.println("Encryption complete!");
+    } catch (Exception e){}
+}
 
+static void decryptFile(String filePath, String keyPath){
+    try {
+        FileInputStream fileInput = new FileInputStream(filePath);
+        byte[] fileBytes = fileInput.readAllBytes();
 
 //
 
+    FileInputStream keyInput = new FileInputStream(keyPath);
+    byte[] keyBytes = keyInput.readAllBytes();
+    keyInput.close();    
 
-        String productPath = filepath + ".tcrt";
-        try(FileWriter productWriter = new FileWriter(productPath, false)){
+//
 
+    byte[] decrypted = new byte[fileBytes.length];
 
-            productWriter.write(result.toString());
-            IO.println(productPath);
-
-        } catch (Exception f){
-            JOptionPane.showMessageDialog(null, "Error at writing encrypted File to disk");
-        }
-
-
-       String keyPath = filepath + ".tkey";
-        try(FileWriter keyWriter = new FileWriter(keyPath, false)){
-
-
-            keyWriter.write(key);
-            key = "";
-
-        };
-        
-
-
-    IO.println("Encryption complete!");
-    IO.print("> ");
-    } catch (Exception e){
-        JOptionPane.showMessageDialog(null, "Error at encrypting the file");
+    for (int i = 0; i < fileBytes.length; i++){
+        decrypted[i] = (byte)(fileBytes[i] ^ keyBytes[i]);
     }
-
-
-
-}
-
-static void decryptFile(String filepath, String keypath){
-    try (BufferedReader fileReader = new BufferedReader(new FileReader(filepath))){
-        String fileLine;
-
-        StringBuilder encryptedFileBuilder = new StringBuilder();
-        while ((fileLine = fileReader.readLine()) != null){
-            encryptedFileBuilder.append(fileLine);
-        }
-        String encryptedFile = encryptedFileBuilder.toString();
-        
-        String keyFile = "";
-        
-        try (BufferedReader keyReader = new BufferedReader(new FileReader(keypath))){
-        
-        String keyLine;
-        while ((keyLine = keyReader.readLine()) != null){
-            keyFile += keyLine;
-        } 
-
-        StringBuilder res = new StringBuilder();
-        for (int i = 0; i < encryptedFile.length(); i++){
-            if (encryptedFile.charAt(i) == keyFile.charAt(i)){
-                res.append('0');
-            } else {
-                res.append('1');
-            }
-
-
-        }
-
-
-
-
-
-        int l = 8; // 8 bit in 1 byte
-        ArrayList<String> resStr = new ArrayList<>();
-        for (int i = 0; i < res.length(); i += l){
-            String sub = res.substring(i, Math.min(i + l, res.length()));
-            resStr.add(sub);
-        }
-
-        ArrayList<Integer> resInt = new ArrayList<>();
-
-        for (int i = 0; i < resStr.size(); i++){
-            resInt.add(Integer.parseInt(resStr.get(i), 2));
-            
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (int i : resInt){
-           sb.append((char) i);
-        }
-        String finalString = sb.toString();
-
-        
-        
-        String finalPath = filepath.replace(".tcrt", ".tmsg");
-        
-        try(FileWriter messageWriter = new FileWriter(finalPath, false)){
-
-
-            messageWriter.write(finalString);
-            finalString = "";
-
-        };
-
-
-
+//
+    FileOutputStream resOut = new FileOutputStream(filePath.replace(".tcrt", ".tmsg"));
+        resOut.write(decrypted);
+        resOut.close();
         IO.println("Decryption complete!");
-        IO.print("> ");
-        } catch (Exception f){IO.print(f);}
-             
-
-
-    } catch (Exception e){IO.print(e);}
+    } catch (Exception e){JOptionPane.showMessageDialog(null, "Error at writing file to disk");}
 
 
 }
