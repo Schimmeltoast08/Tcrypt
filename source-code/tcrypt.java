@@ -94,9 +94,9 @@ static void encryptFile(String filepath){
 
 
 //
-        String productPath = new File("").getAbsolutePath();
-        productPath += "/" + filepath + ".tcrt";
 
+
+        String productPath = filepath + ".tcrt";
         try(FileWriter productWriter = new FileWriter(productPath, false)){
 
 
@@ -107,7 +107,8 @@ static void encryptFile(String filepath){
             JOptionPane.showMessageDialog(null, "Error at writing encrypted File to disk");
         }
 
-        String keyPath = new File("").getAbsolutePath() + "/" + filepath + ".tkey";
+
+       String keyPath = filepath + ".tkey";
         try(FileWriter keyWriter = new FileWriter(keyPath, false)){
 
 

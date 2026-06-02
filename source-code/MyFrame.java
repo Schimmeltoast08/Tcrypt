@@ -165,15 +165,17 @@ public class MyFrame extends JFrame implements ActionListener {
             try{
                 if (encryptionMode){
                     //String path = file.getPath();
-                    Path basedir = Paths.get(System.getProperty("user.dir"));
-                    tcrypt.encryptFile((basedir.relativize(file.toPath())).toString());
+                    //Path basedir = Paths.get(System.getProperty("user.dir"));
+                    tcrypt.encryptFile(file.getAbsolutePath()/*.toString()*/);
+                    IO.println(file.getAbsolutePath());
                     JOptionPane.showMessageDialog(null, "File Encrypted");
 
                 } else {
                     //String path1 = file.getPath();
-                    String keyPath = keyFile.getPath();
-                    Path basedir = Paths.get(System.getProperty("user.dir"));
-                    tcrypt.decryptFile(basedir.relativize(file.toPath()).toString(), (basedir.relativize(keyFile.toPath())).toString());
+                   // String keyPath = keyFile.getPath();
+                    //Path basedir = Paths.get(System.getProperty("user.dir"));
+                    tcrypt.decryptFile(file.getAbsolutePath()/*.toString()*/, keyFile.getAbsolutePath()/*.toString()*/);
+                    IO.println(file.getAbsolutePath() + " " + keyFile.getAbsolutePath());
                     JOptionPane.showMessageDialog(null, "File Decrypted");
                 }
             }
