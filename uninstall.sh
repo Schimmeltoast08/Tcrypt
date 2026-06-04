@@ -2,3 +2,4 @@
 
 sudo rm -rf /opt/tcrypt
 sudo rm /usr/bin/tcrypt
+rm -rf ~/.local/share/tcrypt

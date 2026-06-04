@@ -113,6 +113,9 @@ public static void encryptFile(String filepath){
     keyOut.close();
     IO.println("Encryption complete!");
     Log.log("Encryption OK!", Level.INFO);
+
+    VerificationEngine.saveHash(filepath);
+
     } catch (IOException e){
         JOptionPane.showMessageDialog(null, "Error at writing file to disk");
         Log.log("Encryption failed!", Level.SEVERE);
@@ -121,43 +124,43 @@ public static void encryptFile(String filepath){
 
 public static void decryptFile(String filePath, String keyPath){
     try {
-        Log.log("Decrypting file " + filePath + "with key" + keyPath, Level.INFO);
+        Log.log("Decrypting file " + filePath + " with key " + keyPath, Level.INFO);
         FileInputStream fileInput = new FileInputStream(filePath);
         byte[] fileBytes = fileInput.readAllBytes();
+        fileInput.close(); // Added to safely close the stream
 
-//
+        FileInputStream keyInput = new FileInputStream(keyPath);
+        byte[] keyBytes = keyInput.readAllBytes();
+        keyInput.close();    
+
+        if (keyBytes.length != fileBytes.length){
+            Log.log("Key length does not match file length: Key " + keyBytes.length + " | File " + fileBytes.length, Level.WARNING);
+        }
+
+        byte[] decrypted = new byte[fileBytes.length];
+
+        for (int i = 0; i < fileBytes.length; i++){
+            decrypted[i] = (byte)(fileBytes[i] ^ keyBytes[i]);
+        }
 
 
+        String decryptedPath = filePath.replace(".tcrt", "");
 
-    FileInputStream keyInput = new FileInputStream(keyPath);
-    byte[] keyBytes = keyInput.readAllBytes();
-    keyInput.close();    
-
-//
-    if (keyBytes.length != fileBytes.length){
-        Log.log("Key length does not match file length: Key " + keyBytes.length + " | File " + fileBytes.length, Level.WARNING);
-    }
-
-    byte[] decrypted = new byte[fileBytes.length];
-
-    for (int i = 0; i < fileBytes.length; i++){
-        decrypted[i] = (byte)(fileBytes[i] ^ keyBytes[i]);
-    }
-
-    FileOutputStream resOut = new FileOutputStream(filePath.replace(".tcrt", ".tmsg"));
+        FileOutputStream resOut = new FileOutputStream(decryptedPath);
         resOut.write(decrypted);
         resOut.close();
-//
-        VerificationEngine.verify(filePath);
-//
+
+        if (!VerificationEngine.verify(decryptedPath)) {        
+            IO.println("unverified file! Continue with caution");
+        }
+        
 
         IO.println("Decryption complete!");
-    Log.log("Decryption OK!", Level.INFO);
+        Log.log("Decryption OK!", Level.INFO);
     } catch (IOException e){
         JOptionPane.showMessageDialog(null, "Error at writing file to disk");
-        Log.log("Decryption failed!", Level.SEVERE);}
-
-
+        Log.log("Decryption failed!", Level.SEVERE);
+    }
 }
 
 }
