@@ -1,18 +1,21 @@
+package tcrypt.gui;
 
 import java.awt.Font;
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.logging.Level;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
-import javax.swing.JLabel;
-import javax.swing.JComponent;
+import tcrypt.crypto.Tcrypt;
+import tcrypt.util.Log;
 
 
 public class MyFrame extends JFrame implements ActionListener {
@@ -39,7 +42,8 @@ public class MyFrame extends JFrame implements ActionListener {
     File file;
 
 
-    MyFrame(boolean encryptionMode){
+    public MyFrame(boolean encryptionMode){
+        Log.log("New GUI Frame created", Level.INFO);
        this.encryptionMode = encryptionMode;
 
 
@@ -156,18 +160,11 @@ public class MyFrame extends JFrame implements ActionListener {
 
 
 
-
-
-
-
-
-
-
-
     @Override
     public void actionPerformed(ActionEvent e){
 
         if (e.getSource() == exitButton){
+            Log.log("Exiting application", Level.INFO);
             dispose();
             
         }
@@ -215,24 +212,27 @@ public class MyFrame extends JFrame implements ActionListener {
                     JOptionPane.showMessageDialog(null, "Please select a file");
                 } else {
                     if (encryptionMode){
-                        tcrypt.encryptFile(file.getAbsolutePath());
+                        Tcrypt.encryptFile(file.getAbsolutePath());
                         
                         JOptionPane.showMessageDialog(null, "File Encrypted");
+                        
 
                     } else {
                         if (keyFile == null){
                             JOptionPane.showMessageDialog(null, "Please select a key");
                         } else {
 
-                            tcrypt.decryptFile(file.getAbsolutePath(), keyFile.getAbsolutePath());
-                            JOptionPane.showMessageDialog(null, "File Decrypted");
-                        }
+                                Tcrypt.decryptFile(file.getAbsolutePath(), keyFile.getAbsolutePath());
+                                
+                                JOptionPane.showMessageDialog(null, "File Decrypted");
+                            }
+                        }  
                     }
-                }
             }
-                        catch (Exception f){
+            catch (HeadlessException f){
             IO.println(f);
             JOptionPane.showMessageDialog(null, "Error at File Operation " + f);
+            Log.log("Error at file Operation: " + f, Level.SEVERE);
             
         } 
         }

@@ -1,16 +1,16 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+package tcrypt.crypto;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.Scanner;
+import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import tcrypt.gui.MyFrame;
+import tcrypt.util.Log;
 
-
-public class tcrypt{
+public class Tcrypt{
     static String key = "";
     public static void main(String[] args) {
 
@@ -49,6 +49,7 @@ public class tcrypt{
             IO.print("> ");
             String prompt = scanner.nextLine();
             if (prompt.toLowerCase().startsWith("exit") || prompt.toLowerCase().startsWith("q")){
+                Log.log("Exiting application", Level.INFO);
                 doExit = true;
                 doTry = false;
             }
@@ -85,8 +86,9 @@ public class tcrypt{
     }
 /////////////////////////////////
 
-static void encryptFile(String filepath){
+public static void encryptFile(String filepath){
     try{
+    Log.log("Encrypting file " + filepath, Level.INFO);
     FileInputStream input = new FileInputStream(filepath);
     byte[] fileBytes = input.readAllBytes();
     input.close();
@@ -110,33 +112,50 @@ static void encryptFile(String filepath){
     keyOut.write(key);
     keyOut.close();
     IO.println("Encryption complete!");
-    } catch (Exception e){}
+    Log.log("Encryption OK!", Level.INFO);
+    } catch (IOException e){
+        JOptionPane.showMessageDialog(null, "Error at writing file to disk");
+        Log.log("Encryption failed!", Level.SEVERE);
+    }
 }
 
-static void decryptFile(String filePath, String keyPath){
+public static void decryptFile(String filePath, String keyPath){
     try {
+        Log.log("Decrypting file " + filePath + "with key" + keyPath, Level.INFO);
         FileInputStream fileInput = new FileInputStream(filePath);
         byte[] fileBytes = fileInput.readAllBytes();
 
 //
+
+
 
     FileInputStream keyInput = new FileInputStream(keyPath);
     byte[] keyBytes = keyInput.readAllBytes();
     keyInput.close();    
 
 //
+    if (keyBytes.length != fileBytes.length){
+        Log.log("Key length does not match file length: Key " + keyBytes.length + " | File " + fileBytes.length, Level.WARNING);
+    }
 
     byte[] decrypted = new byte[fileBytes.length];
 
     for (int i = 0; i < fileBytes.length; i++){
         decrypted[i] = (byte)(fileBytes[i] ^ keyBytes[i]);
     }
-//
+
     FileOutputStream resOut = new FileOutputStream(filePath.replace(".tcrt", ".tmsg"));
         resOut.write(decrypted);
         resOut.close();
+//
+        VerificationEngine.verify(filePath);
+//
+
         IO.println("Decryption complete!");
-    } catch (Exception e){JOptionPane.showMessageDialog(null, "Error at writing file to disk");}
+    Log.log("Decryption OK!", Level.INFO);
+    } catch (IOException e){
+        JOptionPane.showMessageDialog(null, "Error at writing file to disk");
+        Log.log("Decryption failed!", Level.SEVERE);}
 
 
 }
