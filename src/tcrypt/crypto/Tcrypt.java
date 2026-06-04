@@ -12,9 +12,12 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import tcrypt.gui.MyFrame;
 import tcrypt.util.Log;
+import java.nio.charset.StandardCharsets;
 
 public class Tcrypt{
-     private static final byte[] MAGIC = "TCRYPT".getBytes(); // so only TCRYPT files may be decrypted, not random garbage files //metadata
+     private static final byte[] MAGIC = "TCRYPT".getBytes(StandardCharsets.UTF_8); // so only TCRYPT files may be decrypted, not random garbage files //metadata
+     public static int TcryptFormatVersion;
+     public static final int TcryptVersion = 1;
     public static void main(String[] args) {
 
         if (args.length > 0 && args[0].equals("--gui")){
@@ -118,7 +121,7 @@ public static void encryptFile(String filepath){
 //
     String password = JOptionPane.showInputDialog("Password: ");
     final String ALGORITHM = "SHA-256";
-    byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes());
+    byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes(StandardCharsets.UTF_8));
     SecureRandom rng = SecureRandom.getInstance("SHA1PRNG");
     rng.setSeed(passwordHash);
     
@@ -132,15 +135,16 @@ public static void encryptFile(String filepath){
     FileOutputStream fileOut = new FileOutputStream(filepath + ".tcrt");
     fileOut.write(MAGIC);
     String fileName = new File(filepath).getName();
-    fileOut.write(fileName.getBytes().length);
-    fileOut.write(fileName.getBytes());
+    fileOut.write(fileName.getBytes(StandardCharsets.UTF_8).length);
+    fileOut.write(fileName.getBytes(StandardCharsets.UTF_8));
+    fileOut.write((byte) 1); // Tcrypt File Version Number
     fileOut.write(encrypted);
     fileOut.close();
     
 //
     FileOutputStream keyOut = new FileOutputStream(filepath + ".tkey");
     keyOut.write(key);
-    keyOut.write(originalHash.getBytes());
+    keyOut.write(originalHash.getBytes(StandardCharsets.UTF_8));
     keyOut.close();
     IO.println("Encryption complete!");
     Log.log("Encryption OK!", Level.INFO);
@@ -170,6 +174,20 @@ public static void decryptFile(String filePath, String keyPath){
         byte[] fileName = new byte[fileNameLength];
         fileInput.read(fileName);
         String originalFileName = new String(fileName);
+        TcryptFormatVersion = fileInput.read();
+
+        if (TcryptFormatVersion > TcryptVersion) {
+        JOptionPane.showMessageDialog(null,
+        """
+        This file was created by a newer version of Tcrypt.
+
+        File format: %d
+        Supported: %d
+        """
+        .formatted(TcryptFormatVersion, TcryptVersion));
+        fileInput.close();
+        return;
+        }
 
         if (!Arrays.equals(header,MAGIC)){
             Log.log("File is not a Tcrypt file", Level.WARNING);
@@ -194,7 +212,7 @@ public static void decryptFile(String filePath, String keyPath){
 
         final String ALGORITHM = "SHA-256";
         String password = JOptionPane.showInputDialog("Password: ");
-        byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes());
+        byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes(StandardCharsets.UTF_8));
         SecureRandom rng = SecureRandom.getInstance("SHA1PRNG");
         rng.setSeed(passwordHash);
         byte[] mask = new byte[keyBytes.length];
@@ -231,7 +249,9 @@ public static void decryptFile(String filePath, String keyPath){
         String[] decryptedPathElements = filePath.split(File.separator);
         String decryptedPath = filePath.replace(decryptedPathElements[decryptedPathElements.length - 1], originalFileName);
 
-        FileOutputStream resOut = new FileOutputStream(decryptedPath);
+        
+        File outputFile = getAvailableFile(decryptedPath);
+        FileOutputStream resOut = new FileOutputStream(outputFile);
         resOut.write(decrypted);
         resOut.close();
         
@@ -244,6 +264,7 @@ public static void decryptFile(String filePath, String keyPath){
 
         IO.println("Decryption complete!");
         Log.log("Decryption OK!", Level.INFO);
+        Log.log("Decrypted Format Version: " + TcryptFormatVersion + " Tcrypt Version: " + TcryptVersion, Level.INFO);
     } catch (IOException e){
         JOptionPane.showMessageDialog(null, "Error at writing file to disk");
         Log.log("Decryption failed!", Level.SEVERE);
@@ -279,6 +300,47 @@ public static void decryptFile(String filePath, String keyPath){
 
         return sb.toString();
     }
+
+private static File getAvailableFile(String filePath) {
+
+    File file = new File(filePath);
+
+    if (!file.exists()) {
+        return file;
+    }
+
+    String name = file.getName();
+    String parent = file.getParent();
+
+    int dot = name.lastIndexOf('.');
+
+    String baseName;
+    String extension;
+
+    if (dot == -1) {
+        baseName = name;
+        extension = "";
+    } else {
+        baseName = name.substring(0, dot);
+        extension = name.substring(dot);
+    }
+
+    int counter = 1;
+
+    while (true) {
+
+        String newName = baseName + " (" + counter + ")" + extension;
+
+        File candidate =
+                parent == null ? new File(newName) : new File(parent, newName);
+
+        if (!candidate.exists()) {
+            return candidate;
+        }
+
+        counter++;
+    }
+}
 
 
 }
