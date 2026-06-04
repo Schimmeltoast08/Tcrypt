@@ -41,6 +41,9 @@ public class MyFrame extends JFrame implements ActionListener {
     File keyFile;
     File file;
 
+    private static final int WINDOW_WIDTH = 1000;
+    private static final int WINDOW_HEIGHT = 400;   
+
 
     public MyFrame(boolean encryptionMode){
         Log.log("New GUI Frame created", Level.INFO);
@@ -51,7 +54,7 @@ public class MyFrame extends JFrame implements ActionListener {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setTitle("Tcrypt");
         this.setVisible(true);
-        this.setSize(1000, 400);
+        this.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         this.setResizable(false);
         this.setLayout(null); // for absolute positioning
         //this.getContentPane().setBackground(new Color(47,47,47));
