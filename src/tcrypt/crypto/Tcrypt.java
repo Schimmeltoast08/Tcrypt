@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Scanner;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
 import tcrypt.gui.MyFrame;
 import tcrypt.util.Log;
 
@@ -115,8 +116,24 @@ public static void encryptFile(String filepath, MyFrame myFrame){
     fileOut.write(fileName.getBytes(StandardCharsets.UTF_8));
     fileOut.write((byte) TcryptFormatVersion); // Tcrypt File Version Number
 
+    JPasswordField passwordField = new JPasswordField();
 
-    String password = JOptionPane.showInputDialog("Password: ");
+    Object[] message = {
+        "Password:",
+        passwordField
+    };
+    String password = new String();
+    int result = JOptionPane.showConfirmDialog(
+            null,
+            message,
+            "Enter Password",
+            JOptionPane.OK_CANCEL_OPTION);
+
+    if (result == JOptionPane.OK_OPTION) {
+        password = new String(passwordField.getPassword());
+    }
+
+
     final String ALGORITHM = "SHA-256";
     byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes(StandardCharsets.UTF_8));
     SecureRandom rng = SecureRandom.getInstance("SHA1PRNG");
@@ -143,7 +160,9 @@ public static void encryptFile(String filepath, MyFrame myFrame){
             }
         progess += bytesRead;
         percent = (int) ((int) (progess * 100) / fileLength); // idk why, but double casting works
-        myFrame.setProgressBar(percent);
+        if (myFrame != null) {
+           myFrame.setProgressBar(percent);
+        }
         try {
         } catch (Exception e) {Log.log("Error at setting percent bar", Level.WARNING);}
         //IO.print(percent  + " "); works
@@ -221,7 +240,25 @@ public static void decryptFile(String filePath, String keyPath){
 
 
         final String ALGORITHM = "SHA-256";
-        String password = JOptionPane.showInputDialog("Password: ");
+
+        JPasswordField passwordField = new JPasswordField();
+
+        Object[] message = {
+            "Password:",
+            passwordField
+        };
+        String password = new String();
+        int result = JOptionPane.showConfirmDialog(
+            null,
+            message,
+            "Enter Password",
+            JOptionPane.OK_CANCEL_OPTION);
+
+        if (result == JOptionPane.OK_OPTION) {
+            password = new String(passwordField.getPassword());
+        }
+
+
         byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes(StandardCharsets.UTF_8));
         SecureRandom rng = SecureRandom.getInstance("SHA1PRNG");
         rng.setSeed(passwordHash);
