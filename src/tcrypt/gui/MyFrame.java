@@ -13,7 +13,10 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import tcrypt.crypto.Tcrypt;
 import tcrypt.util.Log;
 
@@ -33,6 +36,8 @@ public class MyFrame extends JFrame implements ActionListener {
     JLabel filePathLabel;
     JLabel keyPathLabel;
 
+    JProgressBar progressBar;
+
 
     Font font = new Font("Arial", Font.PLAIN, 20);
 
@@ -40,6 +45,7 @@ public class MyFrame extends JFrame implements ActionListener {
     boolean encryptionMode;
     File keyFile;
     File file;
+    static int barValue = 0;
 
     private static final int WINDOW_WIDTH = 1000;
     private static final int WINDOW_HEIGHT = 400;   
@@ -142,6 +148,13 @@ public class MyFrame extends JFrame implements ActionListener {
 
     //
 
+    //
+    progressBar = new JProgressBar();
+    progressBar.setBounds(230, 320, 640, 50);
+    progressBar.setFont(font);
+    progressBar.setValue(0);
+    progressBar.setStringPainted(true);
+
 
 
     // add-stack
@@ -155,7 +168,7 @@ public class MyFrame extends JFrame implements ActionListener {
     this.add(decryptRadioButton);
 
 
-
+    this.add(progressBar);
 
         revalidate();
         repaint();
@@ -215,9 +228,10 @@ public class MyFrame extends JFrame implements ActionListener {
                     JOptionPane.showMessageDialog(null, "Please select a file");
                 } else {
                     if (encryptionMode){
-                        Tcrypt.encryptFile(file.getAbsolutePath());
-                        
+                        //Tcrypt.encryptFile(file.getAbsolutePath());
+                        startThread(file.getAbsolutePath(), this);
                         JOptionPane.showMessageDialog(null, "File Encrypted");
+                        progressBar.setValue(0);
                         
 
                     } else {
@@ -264,6 +278,28 @@ private void setElementText(JLabel label, String text){
     label.setText(text);
     revalidate();
     repaint();
+}
+
+private static void startThread(String filePath, MyFrame myFrame){
+    SwingWorker swingWorker = new SwingWorker(){
+        @Override
+        protected String doInBackground() throws Exception{
+            Tcrypt.encryptFile(filePath, myFrame);
+            return "1"; // stupid, should be void
+        }
+
+        //@Override
+        protected void process(){
+         myFrame.progressBar.setValue(barValue);   
+        }
+    };
+    swingWorker.execute();
+}
+
+public void setProgressBar(int value) {
+    SwingUtilities.invokeLater(() -> {
+        progressBar.setValue(value);
+    });
 }
 
 

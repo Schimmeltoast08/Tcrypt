@@ -18,6 +18,7 @@ public class Tcrypt{
      private static final byte[] MAGIC = "TCRYPT".getBytes(StandardCharsets.UTF_8); // so only TCRYPT files may be decrypted, not random garbage files //metadata
      public static int TcryptFormatVersion;
      public static final int TcryptVersion = 1;
+     public static int percent;
     public static void main(String[] args) {
 
         if (args.length > 0 && args[0].equals("--gui")){
@@ -26,7 +27,7 @@ public class Tcrypt{
         }
 
         if (args.length > 1 && args[0].equals("--encrypt")){
-            encryptFile(args[1]);
+            encryptFile(args[1], null);
             return;
         }
 
@@ -75,7 +76,7 @@ public class Tcrypt{
             
             if (doTry){
                 if (prompt.toLowerCase().startsWith("e")){
-                    encryptFile((prompt.substring(prompt.indexOf(" ") + 1)));
+                    encryptFile((prompt.substring(prompt.indexOf(" ") + 1)), null);
                 }
 
                 if (prompt.toLowerCase().startsWith("d")){
@@ -96,10 +97,13 @@ public class Tcrypt{
     }
 /////////////////////////////////
 
-public static void encryptFile(String filepath){
+public static void encryptFile(String filepath, MyFrame myFrame){
     try{
     Log.log("Encrypting file " + filepath, Level.INFO);
     String originalHash = hashFile(filepath);
+    long progess = 0;
+    long fileLength = new File(filepath).length();
+
 
     FileInputStream input = new FileInputStream(filepath);
     FileOutputStream fileOut = new FileOutputStream(filepath + ".tcrt");
@@ -137,7 +141,12 @@ public static void encryptFile(String filepath){
             encryptedBuffer[i] = (byte)(fileBuffer[i] ^ keyBuffer[i]);
             keyBuffer[i] = (byte)(keyBuffer[i] ^ maskBuffer[i]);
             }
-
+        progess += bytesRead;
+        percent = (int) ((int) (progess * 100) / fileLength); // idk why, but double casting works
+        myFrame.setProgressBar(percent);
+        try {
+        } catch (Exception e) {Log.log("Error at setting percent bar", Level.WARNING);}
+        //IO.print(percent  + " "); works
         fileOut.write(encryptedBuffer, 0, bytesRead);
 
         keyOut.write(keyBuffer, 0, bytesRead);
@@ -166,7 +175,6 @@ public static void decryptFile(String filePath, String keyPath){
     try {
         Log.log("Decrypting file " + filePath + " with key " + keyPath, Level.INFO);
         FileInputStream fileInput = new FileInputStream(filePath);
-
 
 
         byte[] header = new byte[MAGIC.length];
