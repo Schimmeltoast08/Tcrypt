@@ -36,6 +36,16 @@ public class Tcrypt{
             decryptFile(args[1], args[2]);
             return;
         }
+
+        if (args.length > 2 && args[0].equals("--verify")){
+            verifyFile(args[1], args[2]);
+            return;
+        }
+
+        if (args.length > 0 && args[0].equals("--version")){
+            IO.println("Tcrypt version: " + TcryptVersion);
+            return;
+        }
         
 
         if (args.length > 0 && args[0].equals("--help")){
@@ -63,11 +73,25 @@ public class Tcrypt{
                 doTry = false;
             }
             if (prompt.toLowerCase().startsWith("help")){
-                IO.println("D     Decrypt\nE     Encrypt\nG     Gui\nQ     Exit");
+                IO.println("D     Decrypt\nE     Encrypt\nG     Gui\nV     Verify\nQ     Exit");
             }
 
             if (prompt.toLowerCase().startsWith("g")){
                 MyFrame myFrame = new MyFrame(true);
+
+            }
+
+            if (prompt.startsWith("v")){
+                    String filepath = prompt.split(" ")[1];
+                    String keyPath = prompt.split(" ")[2];
+                    verifyFile(filepath, keyPath);
+            }
+
+            if (prompt.toLowerCase().startsWith("version")){
+                IO.println("Tcrypt verion: " + TcryptVersion);
+            }
+
+            if (prompt.toLowerCase().startsWith("v")){
 
             }
 
@@ -98,6 +122,7 @@ public class Tcrypt{
 public static void encryptFile(String filepath, MyFrame myFrame){
     try{
     Log.log("Encrypting file " + filepath, Level.INFO);
+    long start = System.nanoTime();
     String originalHash = hashFile(filepath);
     long progess = 0;
     long fileLength = new File(filepath).length();
@@ -123,6 +148,7 @@ public static void encryptFile(String filepath, MyFrame myFrame){
         passwordField
     };
     String password = new String();
+    long intermediateTime1 = System.nanoTime();
     int result = JOptionPane.showConfirmDialog(
             null,
             message,
@@ -132,6 +158,7 @@ public static void encryptFile(String filepath, MyFrame myFrame){
     if (result == JOptionPane.OK_OPTION) {
         password = new String(passwordField.getPassword());
     }
+    long intermediateTime2 = System.nanoTime();
 
 //
     final String ALGORITHM = "SHA-256";
@@ -180,7 +207,8 @@ public static void encryptFile(String filepath, MyFrame myFrame){
     IO.println("Encryption complete!");
     Log.log("Encryption OK!", Level.INFO);
 
-
+    long end = System.nanoTime();
+    Log.log("Time to Encrypt: " + (((end - start) - (intermediateTime2 - intermediateTime1)) / 1_000_000_000.0) + "s", Level.INFO);
     } catch (IOException e){
         JOptionPane.showMessageDialog(null, "Error at writing file to disk");
         Log.log("Encryption failed!", Level.SEVERE);
@@ -193,6 +221,7 @@ public static void encryptFile(String filepath, MyFrame myFrame){
 public static void decryptFile(String filePath, String keyPath){
     try {
         Log.log("Decrypting file " + filePath + " with key " + keyPath, Level.INFO);
+        long start = System.nanoTime();
         FileInputStream fileInput = new FileInputStream(filePath);
 
 
@@ -248,6 +277,7 @@ public static void decryptFile(String filePath, String keyPath){
             passwordField
         };
         String password = new String();
+        long intermediateTime1 = System.nanoTime();
         int result = JOptionPane.showConfirmDialog(
             null,
             message,
@@ -257,7 +287,7 @@ public static void decryptFile(String filePath, String keyPath){
         if (result == JOptionPane.OK_OPTION) {
             password = new String(passwordField.getPassword());
         }
-
+        long intermediateTime2 = System.nanoTime();
 
         byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes(StandardCharsets.UTF_8));
         SecureRandom rng = SecureRandom.getInstance("SHA1PRNG");
@@ -310,9 +340,11 @@ public static void decryptFile(String filePath, String keyPath){
        }
 
         IO.println("Decryption complete!");
+        long end = System.nanoTime();
         Log.log("Decryption OK!", Level.INFO);
         Log.log("Decrypted Format Version: " + TcryptFormatVersion + " Tcrypt Version: " + TcryptVersion, Level.INFO);
-    } catch (IOException e){
+        Log.log("Time to Decrypt: " + (((end - start) - (intermediateTime2 - intermediateTime1)) / 1_000_000_000.0) + "s", Level.INFO); // Intermediate time --> so slow user
+    } catch (IOException e){                                                                                                            // is not recorded too
         JOptionPane.showMessageDialog(null, "Error at writing file to disk");
         Log.log("Decryption failed!", Level.SEVERE);
     } catch (Exception e) {
@@ -388,7 +420,40 @@ private static File getAvailableFile(String filePath) {
     }
 }
 
+public static void verifyFile(String filepath, String keypath) { // an attacker can just hash the files either way, so this feature does not make it any less secure
+    try {                                                       // file hash is not masked
+        Log.log("Verifying file integrity: " + filepath + " With key: " + keypath, Level.INFO);
 
+        byte[] keyFileBytes;
+        try (FileInputStream in = new FileInputStream(keypath)) {
+            keyFileBytes = in.readAllBytes();
+        }
+
+        if (keyFileBytes.length < 64) {
+            JOptionPane.showMessageDialog(null, "This is not a valid key file");
+            Log.log("Invalid key file used", Level.WARNING);
+            return;
+        }
+
+        String storedHash = new String(Arrays.copyOfRange(keyFileBytes, keyFileBytes.length - 64, keyFileBytes.length),StandardCharsets.UTF_8);
+        String calculatedHash = hashFile(filepath);
+
+        Log.log("Stored hash: " + storedHash, Level.INFO);
+        Log.log("Calculated hash: " + calculatedHash, Level.INFO);
+
+        if (calculatedHash.equals(storedHash)) {
+            JOptionPane.showMessageDialog(null, "Verification passed! Key matches file");
+            Log.log("Verification passed", Level.INFO);
+        } else {
+            JOptionPane.showMessageDialog(null, "Verification failed! Key does not match File.");
+            Log.log("Verification failed", Level.WARNING);
+        }
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error at verification");
+        Log.log("Verification error: " + e, Level.SEVERE);
+    }
+}
 
 
 }
