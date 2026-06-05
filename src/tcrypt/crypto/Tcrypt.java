@@ -17,8 +17,8 @@ import tcrypt.util.Log;
 
 public class Tcrypt{
      private static final byte[] MAGIC = "TCRYPT".getBytes(StandardCharsets.UTF_8); // so only TCRYPT files may be decrypted, not random garbage files //metadata
-     public static int TcryptFormatVersion;
-     public static final int TcryptVersion = 1;
+     public static int TcryptFormatVersion = 2;
+     public static final int TcryptVersion = 2;
      public static int percent;
     public static void main(String[] args) {
 
@@ -56,9 +56,6 @@ public class Tcrypt{
         while (!doExit){
             IO.print("> ");
             String prompt = scanner.nextLine();
-
-            String cmd = prompt.toLowerCase();
-
             
             if (prompt.toLowerCase().startsWith("exit") || prompt.toLowerCase().startsWith("q")){
                 Log.log("Exiting application", Level.INFO);
@@ -115,6 +112,9 @@ public static void encryptFile(String filepath, MyFrame myFrame){
     fileOut.write(fileName.getBytes(StandardCharsets.UTF_8).length); // 256 max
     fileOut.write(fileName.getBytes(StandardCharsets.UTF_8));
     fileOut.write((byte) TcryptFormatVersion); // Tcrypt File Version Number
+    File f = new File(filepath);
+    Long filesize = f.length(); // capital L to avoid deref error
+    Log.log("Filesize: " + filesize.toString(), Level.INFO);
 
     JPasswordField passwordField = new JPasswordField();
 
@@ -133,7 +133,7 @@ public static void encryptFile(String filepath, MyFrame myFrame){
         password = new String(passwordField.getPassword());
     }
 
-
+//
     final String ALGORITHM = "SHA-256";
     byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes(StandardCharsets.UTF_8));
     SecureRandom rng = SecureRandom.getInstance("SHA1PRNG");
@@ -316,7 +316,6 @@ public static void decryptFile(String filePath, String keyPath){
         JOptionPane.showMessageDialog(null, "Error at writing file to disk");
         Log.log("Decryption failed!", Level.SEVERE);
     } catch (Exception e) {
-        e.printStackTrace();
         JOptionPane.showMessageDialog(null, "General Error at Decryption");
         Log.log("Decryption failed!: " + e, Level.SEVERE);
     }
@@ -388,6 +387,8 @@ private static File getAvailableFile(String filePath) {
         counter++;
     }
 }
+
+
 
 
 }
