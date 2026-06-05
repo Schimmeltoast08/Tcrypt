@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -12,7 +13,6 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import tcrypt.gui.MyFrame;
 import tcrypt.util.Log;
-import java.nio.charset.StandardCharsets;
 
 public class Tcrypt{
      private static final byte[] MAGIC = "TCRYPT".getBytes(StandardCharsets.UTF_8); // so only TCRYPT files may be decrypted, not random garbage files //metadata
@@ -98,58 +98,60 @@ public class Tcrypt{
 
 public static void encryptFile(String filepath){
     try{
+    Log.log("Encrypting file " + filepath, Level.INFO);
     String originalHash = hashFile(filepath);
 
-
-
-//        
-    Log.log("Encrypting file " + filepath, Level.INFO);
     FileInputStream input = new FileInputStream(filepath);
-    byte[] fileBytes = input.readAllBytes();
-    input.close();
-//
+    FileOutputStream fileOut = new FileOutputStream(filepath + ".tcrt");
+    FileOutputStream keyOut = new FileOutputStream(filepath + ".tkey");
 
-    byte[] key = new byte[fileBytes.length];
-    SecureRandom random = new SecureRandom(); 
-    random.nextBytes(key);  // populate key
-// 
-    byte[] encrypted = new byte[fileBytes.length];
+    String fileName = new File(filepath).getName();
+    fileOut.write(MAGIC); // HEADER
+    fileOut.write(fileName.getBytes(StandardCharsets.UTF_8).length); // 256 max
+    fileOut.write(fileName.getBytes(StandardCharsets.UTF_8));
+    fileOut.write((byte) TcryptFormatVersion); // Tcrypt File Version Number
 
-    for (int i = 0; i < fileBytes.length; i++){
-        encrypted[i] = (byte) (fileBytes[i] ^ key[i]);
-    }
-//
+
     String password = JOptionPane.showInputDialog("Password: ");
     final String ALGORITHM = "SHA-256";
     byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes(StandardCharsets.UTF_8));
     SecureRandom rng = SecureRandom.getInstance("SHA1PRNG");
     rng.setSeed(passwordHash);
-    
-    byte[] mask = new byte[key.length];
-    rng.nextBytes(mask);
 
-    for (int i = 0; i < key.length; i++){   // Password protect key
-        key[i] ^= mask[i];
+    SecureRandom random = new SecureRandom(); 
+
+    final int BUFFER_SIZE = 8192;
+
+    byte[] fileBuffer = new byte[BUFFER_SIZE];
+    byte[] keyBuffer = new byte[BUFFER_SIZE];
+    byte[] encryptedBuffer = new byte[BUFFER_SIZE];
+    byte[] maskBuffer = new byte[BUFFER_SIZE];
+
+    int bytesRead;
+
+    while ((bytesRead = input.read(fileBuffer)) != -1) {
+        random.nextBytes(keyBuffer);
+        rng.nextBytes(maskBuffer);
+        for (int i = 0; i < bytesRead; i++) {
+
+            encryptedBuffer[i] = (byte)(fileBuffer[i] ^ keyBuffer[i]);
+            keyBuffer[i] = (byte)(keyBuffer[i] ^ maskBuffer[i]);
+            }
+
+        fileOut.write(encryptedBuffer, 0, bytesRead);
+
+        keyOut.write(keyBuffer, 0, bytesRead);
     }
-//
-    FileOutputStream fileOut = new FileOutputStream(filepath + ".tcrt");
-    fileOut.write(MAGIC);
-    String fileName = new File(filepath).getName();
-    fileOut.write(fileName.getBytes(StandardCharsets.UTF_8).length);
-    fileOut.write(fileName.getBytes(StandardCharsets.UTF_8));
-    fileOut.write((byte) 1); // Tcrypt File Version Number
-    fileOut.write(encrypted);
-    fileOut.close();
-    
-//
-    FileOutputStream keyOut = new FileOutputStream(filepath + ".tkey");
-    keyOut.write(key);
+
     keyOut.write(originalHash.getBytes(StandardCharsets.UTF_8));
+    input.close();
+    fileOut.close();
     keyOut.close();
+
+
     IO.println("Encryption complete!");
     Log.log("Encryption OK!", Level.INFO);
 
-    //VerificationEngine.saveHash(filepath);
 
     } catch (IOException e){
         JOptionPane.showMessageDialog(null, "Error at writing file to disk");
@@ -218,7 +220,7 @@ public static void decryptFile(String filePath, String keyPath){
         byte[] mask = new byte[keyBytes.length];
         rng.nextBytes(mask);
 
-        for (int i = 0; i < keyBytes.length; i++){   //HERE
+        for (int i = 0; i < keyBytes.length; i++){
             keyBytes[i] ^= mask[i];
         }
 
@@ -258,7 +260,7 @@ public static void decryptFile(String filePath, String keyPath){
         String currentHash = hashFile(decryptedPath);
 
        if (!storedHash.equals(currentHash)){
-        IO.println("WARNING: File did not pass Integrity check!");
+        IO.println("WARNING: File did not pass Integrity check! Most likely: Wrong password");
 
        }
 
