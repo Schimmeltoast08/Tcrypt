@@ -198,7 +198,9 @@ public static void encryptFile(String filepath, MyFrame myFrame){
         keyOut.write(keyBuffer, 0, bytesRead);
     }
 
-    keyOut.write(originalHash.getBytes(StandardCharsets.UTF_8));
+    fileOut.write(originalHash.getBytes(StandardCharsets.UTF_8)); //////////////////////////////////
+
+    //keyOut.write(originalHash.getBytes(StandardCharsets.UTF_8));
     input.close();
     fileOut.close();
     keyOut.close();
@@ -253,20 +255,39 @@ public static void decryptFile(String filePath, String keyPath){
             JOptionPane.showMessageDialog(null, "File was not encrypted with Tcrypt!");
         }
 
-        byte[] fileBytes = fileInput.readAllBytes();
+        File file = new File(filePath);
+        long fileLength = file.length();
+
+        long payloadLength = file.length() - MAGIC.length - 2 - 64 - fileNameLength; // 2 bcs fileNameByte and Version Byte
+
+        byte[] fileBytes = new byte[(int) payloadLength];
+        fileInput.readNBytes(fileBytes, 0, fileBytes.length);
+
+        byte[] shaSum = new byte[64];
+        fileInput.readNBytes(shaSum, 0, 64);
+
+        String storedHash = new String(shaSum, StandardCharsets.UTF_8);
+
+
+
+
+        //byte[] fileBytes = null;
+        //byte[] shaSum = new byte[64];
+        //fileInput.read(shaSum, ((int) fileLength - 64), (int) fileLength);
+        //fileInput.read(fileBytes, (MAGIC.length + fileNameLength + 2 ), (int) (fileLength - 64));
         fileInput.close();
 
 
 
         FileInputStream keyInput = new FileInputStream(keyPath);
-        byte[] keyFileBytes = keyInput.readAllBytes();
-        keyInput.close();
+        //byte[] keyFileBytes = keyInput.readAllBytes();
+        //keyInput.close();
 
 
         final int hashLength = 64; //sha256 is always 64 long
-        String storedHash = new String(keyFileBytes, keyFileBytes.length - hashLength, hashLength);
-        byte[] keyBytes = Arrays.copyOfRange(keyFileBytes, 0, keyFileBytes.length - hashLength); // seperate key from hash    
-
+        //String storedHash = new String(keyFileBytes, keyFileBytes.length - hashLength, hashLength);
+        //byte[] keyBytes = Arrays.copyOfRange(keyFileBytes, 0, keyFileBytes.length - hashLength); // seperate key from hash    
+        byte[] keyBytes = keyInput.readAllBytes();
 
         final String ALGORITHM = "SHA-256";
 
@@ -420,37 +441,40 @@ private static File getAvailableFile(String filePath) {
     }
 }
 
-public static void verifyFile(String filepath, String keypath) { // an attacker can just hash the files either way, so this feature does not make it any less secure
-    try {                                                       // file hash is not masked
-        Log.log("Verifying file integrity: " + filepath + " With key: " + keypath, Level.INFO);
+public static void verifyFile(String filepath, String encryptedFilePath) {
+    try {
+        Log.log("Verifying file integrity: " + filepath + " Against: " + encryptedFilePath, Level.INFO);
 
-        byte[] keyFileBytes;
-        try (FileInputStream in = new FileInputStream(keypath)) {
-            keyFileBytes = in.readAllBytes();
+        byte[] encryptedBytes;
+
+        try (FileInputStream in = new FileInputStream(encryptedFilePath)) {
+            encryptedBytes = in.readAllBytes();
         }
 
-        if (keyFileBytes.length < 64) {
-            JOptionPane.showMessageDialog(null, "This is not a valid key file");
-            Log.log("Invalid key file used", Level.WARNING);
+        if (encryptedBytes.length < 64) {
+            JOptionPane.showMessageDialog(null, "Encrypted file is invalid.");
+            Log.log("Invalid encrypted file", Level.WARNING);
             return;
         }
 
-        String storedHash = new String(Arrays.copyOfRange(keyFileBytes, keyFileBytes.length - 64, keyFileBytes.length),StandardCharsets.UTF_8);
+        String storedHash = new String(Arrays.copyOfRange(encryptedBytes, encryptedBytes.length - 64, encryptedBytes.length),
+            StandardCharsets.UTF_8);
+
         String calculatedHash = hashFile(filepath);
 
         Log.log("Stored hash: " + storedHash, Level.INFO);
         Log.log("Calculated hash: " + calculatedHash, Level.INFO);
 
         if (calculatedHash.equals(storedHash)) {
-            JOptionPane.showMessageDialog(null, "Verification passed! Key matches file");
+            JOptionPane.showMessageDialog(null, "Verification passed!\nOriginal file matches encrypted file");
             Log.log("Verification passed", Level.INFO);
         } else {
-            JOptionPane.showMessageDialog(null, "Verification failed! Key does not match File.");
+            JOptionPane.showMessageDialog(null, "Verification failed!");
             Log.log("Verification failed", Level.WARNING);
         }
 
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error at verification");
+        JOptionPane.showMessageDialog(null, "Error during verification");
         Log.log("Verification error: " + e, Level.SEVERE);
     }
 }
