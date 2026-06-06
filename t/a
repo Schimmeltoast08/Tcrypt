@@ -1,6 +1,0 @@
-jpackage --input t/ \
---name Tcrypt \
---main-jar tcrypt.jar \
---main-class tcrypt.crypto.Tcrypt \
---type deb \
---java-options '--enable-preview'
