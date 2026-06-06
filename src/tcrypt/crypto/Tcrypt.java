@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -263,30 +264,22 @@ public static void decryptFile(String filePath, String keyPath){
         byte[] fileBytes = new byte[(int) payloadLength];
         fileInput.readNBytes(fileBytes, 0, fileBytes.length);
 
-        byte[] shaSum = new byte[64];
-        fileInput.readNBytes(shaSum, 0, 64);
-
-        String storedHash = new String(shaSum, StandardCharsets.UTF_8);
-
-
-
-
-        //byte[] fileBytes = null;
         //byte[] shaSum = new byte[64];
-        //fileInput.read(shaSum, ((int) fileLength - 64), (int) fileLength);
-        //fileInput.read(fileBytes, (MAGIC.length + fileNameLength + 2 ), (int) (fileLength - 64));
+        //fileInput.readNBytes(shaSum, 0, 64);
+
+        //String storedHash = new String(shaSum, StandardCharsets.UTF_8);
+        String storedHash = getStoredHash(filePath);
+
         fileInput.close();
 
 
 
         FileInputStream keyInput = new FileInputStream(keyPath);
-        //byte[] keyFileBytes = keyInput.readAllBytes();
-        //keyInput.close();
+
 
 
         final int hashLength = 64; //sha256 is always 64 long
-        //String storedHash = new String(keyFileBytes, keyFileBytes.length - hashLength, hashLength);
-        //byte[] keyBytes = Arrays.copyOfRange(keyFileBytes, 0, keyFileBytes.length - hashLength); // seperate key from hash    
+ 
         byte[] keyBytes = keyInput.readAllBytes();
 
         final String ALGORITHM = "SHA-256";
@@ -359,6 +352,7 @@ public static void decryptFile(String filePath, String keyPath){
         IO.println("WARNING: File did not pass Integrity check! Most likely: Wrong password");
 
        }
+       keyInput.close();
 
         IO.println("Decryption complete!");
         long end = System.nanoTime();
@@ -476,6 +470,65 @@ public static void verifyFile(String filepath, String encryptedFilePath) {
     } catch (Exception e) {
         JOptionPane.showMessageDialog(null, "Error during verification");
         Log.log("Verification error: " + e, Level.SEVERE);
+    }
+}
+
+public static String[] inspectFileHeader(String filepath){
+    String[] ret = new String[6];
+    try {
+        Log.log("Inspecting file " + filepath, Level.INFO);
+        FileInputStream fileInput = new FileInputStream(filepath);
+
+
+        byte[] header = new byte[MAGIC.length];
+        fileInput.read(header);
+
+        int fileNameLength = fileInput.read();
+        byte[] fileName = new byte[fileNameLength];
+        fileInput.read(fileName);
+        String originalFileName = new String(fileName);
+        TcryptFormatVersion = fileInput.read();
+
+        if (!Arrays.equals(header,MAGIC)){
+            Log.log("File is not a Tcrypt file", Level.WARNING);
+            IO.println("File was not encrypted with Tcrypt");
+            JOptionPane.showMessageDialog(null, "File was not encrypted with Tcrypt!");
+        }
+
+        File f = new File(filepath);
+        double fileSize = f.length();
+
+
+        ret[0] = new String(header);
+        ret[1] = originalFileName;
+        ret[2] = String.valueOf(TcryptFormatVersion);
+        ret[3] = getStoredHash(filepath).substring(0,16) + "...";
+        ret[4] = String.valueOf(fileSize / 1000);
+        ret[5] = getStoredHash(filepath); // to display full hash in console
+
+
+        return ret;
+
+    } catch (Exception e){
+        Log.log("Error at inspecting file Header: " + e, Level.WARNING);
+    }
+    return ret;
+}
+
+public static String getStoredHash(String filepath) throws IOException {
+
+    try (RandomAccessFile raf = new RandomAccessFile(filepath, "r")) {
+
+        if (raf.length() < 64) {
+            throw new IOException("File too small to contain hash");
+        }
+
+        raf.seek(raf.length() - 64);
+
+        byte[] hashBytes = new byte[64];
+        raf.readFully(hashBytes);
+
+        return new String(hashBytes, StandardCharsets.UTF_8);
     }
 }
 
