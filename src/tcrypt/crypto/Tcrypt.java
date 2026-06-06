@@ -206,9 +206,8 @@ public class Tcrypt {
                 keyOut.write(keyBuffer, 0, bytesRead);
             }
 
-            fileOut.write(originalHash.getBytes(StandardCharsets.UTF_8)); /////////////////////////////////
+            fileOut.write(originalHash.getBytes(StandardCharsets.UTF_8)); 
 
-            // keyOut.write(originalHash.getBytes(StandardCharsets.UTF_8));
             input.close();
             fileOut.close();
             keyOut.close();
