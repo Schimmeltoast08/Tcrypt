@@ -17,9 +17,9 @@ public final class Log {
 
             String logFilePath = getLogFilePath();
             File logFile = new File(logFilePath);
-            
+
             File parentDir = logFile.getParentFile();
-            
+
             if (parentDir != null && !parentDir.exists()) {
                 parentDir.mkdirs();
             }
@@ -39,7 +39,8 @@ public final class Log {
         }
     }
 
-    private Log() {}
+    private Log() {
+    }
 
     public static void log(String msg, Level level) {
         LOGGER.log(level, msg);
@@ -55,10 +56,12 @@ public final class Log {
             return (appData != null ? appData : userHome) + File.separator + "tcrypt" + File.separator + "tcrypt.log";
         } else if (os.contains("mac")) {
             // macOS: /Users/<User>/Library/Logs/tcrypt/tcrypt.log
-            return userHome + File.separator + "Library" + File.separator + "Logs" + File.separator + "tcrypt" + File.separator + "tcrypt.log";
+            return userHome + File.separator + "Library" + File.separator + "Logs" + File.separator + "tcrypt"
+                    + File.separator + "tcrypt.log";
         } else {
             // Linux/Unix /home/<User>/.local/share/tcrypt/tcrypt.log
-            return userHome + File.separator + ".local" + File.separator + "share" + File.separator + "tcrypt" + File.separator + "tcrypt.log";
+            return userHome + File.separator + ".local" + File.separator + "share" + File.separator + "tcrypt"
+                    + File.separator + "tcrypt.log";
         }
     }
 }
