@@ -210,6 +210,9 @@ public class MyFrame extends JFrame implements ActionListener {
             mode = Mode.ENCRYPT;
             fileChooserButton.setText("Choose a File");
             hideElement(fileChooserButton2);
+
+                hideElement(keySelectedLabel);
+                hideElement(keyPathLabel);
         }
 
         if (e.getSource() == verifyRadioButton){
@@ -217,12 +220,18 @@ public class MyFrame extends JFrame implements ActionListener {
             showElement(fileChooserButton2);
             fileChooserButton.setText("Original File");
             fileChooserButton2.setText("Encrypted File");
+
+                hideElement(keySelectedLabel);
+                hideElement(keyPathLabel);
         }
 
         if (e.getSource() == inspectRadioButton){
             mode = Mode.INSPECT;
             hideElement(fileChooserButton2);
             fileChooserButton.setText("Choose a File");
+
+                hideElement(keySelectedLabel);
+                hideElement(keyPathLabel);
         }
 
         if (e.getSource() == fileChooserButton){
