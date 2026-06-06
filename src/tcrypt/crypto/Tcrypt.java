@@ -34,7 +34,7 @@ public class Tcrypt{
         }
 
         if (args.length > 2 && args[0].equals("--decrypt")){
-            decryptFile(args[1], args[2]);
+            decryptFile(args[1], args[2], null);
             return;
         }
 
@@ -106,7 +106,7 @@ public class Tcrypt{
                     try{
                     String filepath = prompt.split(" ")[1];
                     String keyPath = prompt.split(" ")[2];
-                    decryptFile(filepath, keyPath);
+                    decryptFile(filepath, keyPath, null);
                     } catch (ArrayIndexOutOfBoundsException e){
                         JOptionPane.showMessageDialog(null, "Please enter 2 components:\nthe file to be decrypted and the key");
                     }
@@ -221,11 +221,13 @@ public static void encryptFile(String filepath, MyFrame myFrame){
     }
 }
 
-public static void decryptFile(String filePath, String keyPath){
+public static void decryptFile(String filePath, String keyPath, MyFrame myFrame){
     try {
         Log.log("Decrypting file " + filePath + " with key " + keyPath, Level.INFO);
         long start = System.nanoTime();
         FileInputStream fileInput = new FileInputStream(filePath);
+
+        
 
 
         byte[] header = new byte[MAGIC.length];
@@ -246,7 +248,6 @@ public static void decryptFile(String filePath, String keyPath){
         Supported: %d
         """
         .formatted(TcryptFormatVersion, TcryptVersion));
-        fileInput.close();
         return;
         }
 
@@ -261,26 +262,7 @@ public static void decryptFile(String filePath, String keyPath){
 
         long payloadLength = file.length() - MAGIC.length - 2 - 64 - fileNameLength; // 2 bcs fileNameByte and Version Byte
 
-        byte[] fileBytes = new byte[(int) payloadLength];
-        fileInput.readNBytes(fileBytes, 0, fileBytes.length);
-
-        //byte[] shaSum = new byte[64];
-        //fileInput.readNBytes(shaSum, 0, 64);
-
-        //String storedHash = new String(shaSum, StandardCharsets.UTF_8);
         String storedHash = getStoredHash(filePath);
-
-        fileInput.close();
-
-
-
-        FileInputStream keyInput = new FileInputStream(keyPath);
-
-
-
-        final int hashLength = 64; //sha256 is always 64 long
- 
-        byte[] keyBytes = keyInput.readAllBytes();
 
         final String ALGORITHM = "SHA-256";
 
@@ -306,53 +288,72 @@ public static void decryptFile(String filePath, String keyPath){
         byte[] passwordHash = MessageDigest.getInstance(ALGORITHM).digest(password.getBytes(StandardCharsets.UTF_8));
         SecureRandom rng = SecureRandom.getInstance("SHA1PRNG");
         rng.setSeed(passwordHash);
-        byte[] mask = new byte[keyBytes.length];
-        rng.nextBytes(mask);
-
-        for (int i = 0; i < keyBytes.length; i++){
-            keyBytes[i] ^= mask[i];
-        }
-
-
-
-
-        if (keyBytes.length != fileBytes.length){
-            JOptionPane.showMessageDialog(null,
-            """
-            The key file appears corrupted.
-
-            Expected key length: %d
-            Actual key length: %d
-            """
-            .formatted(fileBytes.length, keyBytes.length));
-
-            Log.log("Corrupted key file",Level.WARNING);
-            return;
-        
-        }
-
-        byte[] decrypted = new byte[fileBytes.length];
-
-        for (int i = 0; i < fileBytes.length; i++){
-            decrypted[i] = (byte)(fileBytes[i] ^ keyBytes[i]);
-        }
 
         String[] decryptedPathElements = filePath.split(File.separator);
         String decryptedPath = filePath.replace(decryptedPathElements[decryptedPathElements.length - 1], originalFileName);
 
+       File outputFile = getAvailableFile(decryptedPath);
+
+    try (FileInputStream keyInput = new FileInputStream(keyPath);
+     FileOutputStream resOut = new FileOutputStream(outputFile)) {
+
+    final int BUFFER_SIZE = 8192;
+
+    byte[] fileBuffer = new byte[BUFFER_SIZE];
+    byte[] keyBuffer = new byte[BUFFER_SIZE];
+    byte[] maskBuffer = new byte[BUFFER_SIZE];
+    byte[] decryptedBuffer = new byte[BUFFER_SIZE];
+
+    long remaining = payloadLength;
+    long progress = 0;
+
+    while (remaining > 0) {
+
+        int chunkSize = (int) Math.min(BUFFER_SIZE, remaining);
+
+        int fileRead = fileInput.read(fileBuffer, 0, chunkSize);
+
+        if (fileRead == -1) {
+            throw new IOException("Unexpected end of encrypted file.");
+        }
+
+        int keyRead = keyInput.read(keyBuffer, 0, fileRead);
+
+        if (keyRead != fileRead) {
+            throw new IOException("Key file appears corrupted.");
+        }
+
+        rng.nextBytes(maskBuffer);
+
+        for (int i = 0; i < fileRead; i++) {
+
+            keyBuffer[i] ^= maskBuffer[i];
+
+            decryptedBuffer[i] =
+                    (byte) (fileBuffer[i] ^ keyBuffer[i]);
+        }
+
+        resOut.write(decryptedBuffer, 0, fileRead);
+
+        progress += fileRead;
+        remaining -= fileRead;
+
+        percent = (int) ((progress * 100) / payloadLength);
+
+        if (myFrame != null) {
+            myFrame.setProgressBar(percent);
+        }
+       
+    }
+}
         
-        File outputFile = getAvailableFile(decryptedPath);
-        FileOutputStream resOut = new FileOutputStream(outputFile);
-        resOut.write(decrypted);
-        resOut.close();
-        
-        String currentHash = hashFile(decryptedPath);
+        String currentHash = hashFile(outputFile.getAbsolutePath());
 
        if (!storedHash.equals(currentHash)){
         IO.println("WARNING: File did not pass Integrity check! Most likely: Wrong password");
 
        }
-       keyInput.close();
+       //keyInput.close();
 
         IO.println("Decryption complete!");
         long end = System.nanoTime();
@@ -361,7 +362,7 @@ public static void decryptFile(String filePath, String keyPath){
         Log.log("Time to Decrypt: " + (((end - start) - (intermediateTime2 - intermediateTime1)) / 1_000_000_000.0) + "s", Level.INFO); // Intermediate time --> so slow user
     } catch (IOException e){                                                                                                            // is not recorded too
         JOptionPane.showMessageDialog(null, "Error at writing file to disk");
-        Log.log("Decryption failed!", Level.SEVERE);
+        Log.log("Decryption failed! " + e, Level.SEVERE);
     } catch (Exception e) {
         JOptionPane.showMessageDialog(null, "General Error at Decryption");
         Log.log("Decryption failed!: " + e, Level.SEVERE);

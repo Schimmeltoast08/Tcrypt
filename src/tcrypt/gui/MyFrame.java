@@ -276,7 +276,8 @@ public class MyFrame extends JFrame implements ActionListener {
                         case DECRYPT -> {
                             if (keyFile == null){ JOptionPane.showMessageDialog(null, "Please select a key"); return;}
                             
-                            Tcrypt.decryptFile(file.getAbsolutePath(), keyFile.getAbsolutePath());
+                            //Tcrypt.decryptFile(file.getAbsolutePath(), keyFile.getAbsolutePath());
+                            startThread(file.getAbsolutePath(), this, keyFile.getAbsolutePath());
                             JOptionPane.showMessageDialog(null, "File Decrypted");
                             }
 
@@ -338,19 +339,34 @@ private void setElementText(JLabel label, String text){
 
 private static void startThread(String filePath, MyFrame myFrame){
     SwingWorker swingWorker = new SwingWorker(){
+        
         @Override
         protected String doInBackground() throws Exception{
-            Tcrypt.encryptFile(filePath, myFrame);
+                Tcrypt.encryptFile(filePath, myFrame);
             return "1"; // stupid, should be void
         }
-
-        //@Override
         protected void process(){
          myFrame.progressBar.setValue(barValue);   
         }
     };
     swingWorker.execute();
 }
+
+private static void startThread(String filePath, MyFrame myFrame, String keyPath){
+    SwingWorker swingWorker = new SwingWorker(){
+        
+        @Override
+        protected String doInBackground() throws Exception{
+                Tcrypt.decryptFile(filePath, keyPath, myFrame);
+            return "1";
+        }
+        protected void process(){
+         myFrame.progressBar.setValue(barValue);   
+        }
+    };
+    swingWorker.execute();
+}
+
 
 public void setProgressBar(int value) {
     SwingUtilities.invokeLater(() -> {
