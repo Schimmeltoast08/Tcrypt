@@ -30,6 +30,7 @@ public class MyFrame extends JFrame implements ActionListener {
 
     JRadioButton encryptRadioButton;
     JRadioButton decryptRadioButton;
+    JRadioButton verifyRadioButton;
 
     JLabel fileSelectedLabel;
     JLabel keySelectedLabel;
@@ -49,11 +50,10 @@ public class MyFrame extends JFrame implements ActionListener {
 
     private static final int WINDOW_WIDTH = 1000;
     private static final int WINDOW_HEIGHT = 400;   
+    public static Mode mode = Mode.ENCRYPT;
 
-
-    public MyFrame(boolean encryptionMode){
+    public MyFrame(){
         Log.log("New GUI Frame created", Level.INFO);
-       this.encryptionMode = encryptionMode;
 
 
 
@@ -82,16 +82,23 @@ public class MyFrame extends JFrame implements ActionListener {
 
 
 
-
         decryptRadioButton = new JRadioButton("Decryption");
         decryptRadioButton.setBounds(0,50,200,20);
         decryptRadioButton.addActionListener(this);
         decryptRadioButton.setFont(font);
 
+        verifyRadioButton = new JRadioButton("Verification");
+        verifyRadioButton.setBounds(230,10,200,20);
+        verifyRadioButton.addActionListener(this);
+        verifyRadioButton.setSelected(false);
+        verifyRadioButton.setFont(font);
+
+
 
         ButtonGroup deEnCryptGroup = new ButtonGroup();
         deEnCryptGroup.add(encryptRadioButton);
         deEnCryptGroup.add(decryptRadioButton);
+        deEnCryptGroup.add(verifyRadioButton);
     //
 
     // File Chooser -- Encryption
@@ -166,7 +173,7 @@ public class MyFrame extends JFrame implements ActionListener {
 
     this.add(encryptRadioButton);
     this.add(decryptRadioButton);
-
+    this.add(verifyRadioButton);
 
     this.add(progressBar);
 
@@ -186,13 +193,23 @@ public class MyFrame extends JFrame implements ActionListener {
         }
 
         if (e.getSource() == decryptRadioButton){
-            encryptionMode = false;
+            mode = Mode.DECRYPT;
             showElement(fileChooserButton2);
+            fileChooserButton.setText("Choose a File");
+            fileChooserButton2.setText("Choose a Key");
         }
 
         if (e.getSource() == encryptRadioButton){
-            encryptionMode = true;
+            mode = Mode.ENCRYPT;
+            fileChooserButton.setText("Choose a File");
             hideElement(fileChooserButton2);
+        }
+
+        if (e.getSource() == verifyRadioButton){
+            mode = Mode.VERIFY;
+            showElement(fileChooserButton2);
+            fileChooserButton.setText("Original File");
+            fileChooserButton2.setText("Encrypted File");
         }
 
         if (e.getSource() == fileChooserButton){
@@ -227,7 +244,7 @@ public class MyFrame extends JFrame implements ActionListener {
                 if (file == null){
                     JOptionPane.showMessageDialog(null, "Please select a file");
                 } else {
-                    if (encryptionMode){
+                    if (mode == Mode.ENCRYPT){
                         //Tcrypt.encryptFile(file.getAbsolutePath());
                         startThread(file.getAbsolutePath(), this);
                         JOptionPane.showMessageDialog(null, "File Encrypted");
@@ -237,11 +254,15 @@ public class MyFrame extends JFrame implements ActionListener {
                     } else {
                         if (keyFile == null){
                             JOptionPane.showMessageDialog(null, "Please select a key");
-                        } else {
-
+                        } else if (mode == Mode.DECRYPT) {
                                 Tcrypt.decryptFile(file.getAbsolutePath(), keyFile.getAbsolutePath());
-                                
                                 JOptionPane.showMessageDialog(null, "File Decrypted");
+                            }
+                            else if (mode == Mode.VERIFY){
+                                Tcrypt.verifyFile(file.getAbsolutePath(), keyFile.getAbsolutePath()); // in this instance, keyfile is the .tcrt file!!! It's chuffed, but it works
+                            } else {
+                                Log.log("No Mode option Selected", Level.SEVERE);
+                                JOptionPane.showMessageDialog(null, "No option selected\nSelect en/decrypt or verify");
                             }
                         }  
                     }
@@ -302,6 +323,11 @@ public void setProgressBar(int value) {
     });
 }
 
+enum Mode{
+    ENCRYPT,
+    DECRYPT,
+    VERIFY
+}
 
     
 }
