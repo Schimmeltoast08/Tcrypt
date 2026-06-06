@@ -13,7 +13,10 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import tcrypt.crypto.Tcrypt;
 import tcrypt.util.Log;
 
@@ -27,11 +30,15 @@ public class MyFrame extends JFrame implements ActionListener {
 
     JRadioButton encryptRadioButton;
     JRadioButton decryptRadioButton;
+    JRadioButton verifyRadioButton;
+    JRadioButton inspectRadioButton;
 
     JLabel fileSelectedLabel;
     JLabel keySelectedLabel;
     JLabel filePathLabel;
     JLabel keyPathLabel;
+
+    JProgressBar progressBar;
 
 
     Font font = new Font("Arial", Font.PLAIN, 20);
@@ -40,14 +47,14 @@ public class MyFrame extends JFrame implements ActionListener {
     boolean encryptionMode;
     File keyFile;
     File file;
+    static int barValue = 0;
 
     private static final int WINDOW_WIDTH = 1000;
     private static final int WINDOW_HEIGHT = 400;   
+    public static Mode mode = Mode.ENCRYPT;
 
-
-    public MyFrame(boolean encryptionMode){
+    public MyFrame(){
         Log.log("New GUI Frame created", Level.INFO);
-       this.encryptionMode = encryptionMode;
 
 
 
@@ -76,20 +83,32 @@ public class MyFrame extends JFrame implements ActionListener {
 
 
 
-
         decryptRadioButton = new JRadioButton("Decryption");
         decryptRadioButton.setBounds(0,50,200,20);
         decryptRadioButton.addActionListener(this);
         decryptRadioButton.setFont(font);
 
+        verifyRadioButton = new JRadioButton("Verification");
+        verifyRadioButton.setBounds(230,10,200,20);
+        verifyRadioButton.addActionListener(this);
+        verifyRadioButton.setFont(font);
+
+        inspectRadioButton = new JRadioButton("Inspection");
+        inspectRadioButton.setBounds(230,50,200,20);
+        inspectRadioButton.addActionListener(this);
+        inspectRadioButton.setFont(font);
+
+
 
         ButtonGroup deEnCryptGroup = new ButtonGroup();
         deEnCryptGroup.add(encryptRadioButton);
         deEnCryptGroup.add(decryptRadioButton);
+        deEnCryptGroup.add(verifyRadioButton);
+        deEnCryptGroup.add(inspectRadioButton);
     //
 
     // File Chooser -- Encryption
-        fileChooserButton = new JButton("Choose a file");
+        fileChooserButton = new JButton("Choose a File");
         fileChooserButton.setBounds(0,90,200,50);
         fileChooserButton.addActionListener(this);
         fileChooserButton.setFont(font);
@@ -142,6 +161,13 @@ public class MyFrame extends JFrame implements ActionListener {
 
     //
 
+    //
+    progressBar = new JProgressBar();
+    progressBar.setBounds(230, 320, 640, 50);
+    progressBar.setFont(font);
+    progressBar.setValue(0);
+    progressBar.setStringPainted(true);
+
 
 
     // add-stack
@@ -153,9 +179,10 @@ public class MyFrame extends JFrame implements ActionListener {
 
     this.add(encryptRadioButton);
     this.add(decryptRadioButton);
+    this.add(verifyRadioButton);
+    this.add(inspectRadioButton);
 
-
-
+    this.add(progressBar);
 
         revalidate();
         repaint();
@@ -173,13 +200,38 @@ public class MyFrame extends JFrame implements ActionListener {
         }
 
         if (e.getSource() == decryptRadioButton){
-            encryptionMode = false;
+            mode = Mode.DECRYPT;
             showElement(fileChooserButton2);
+            fileChooserButton.setText("Choose a File");
+            fileChooserButton2.setText("Choose a Key");
         }
 
         if (e.getSource() == encryptRadioButton){
-            encryptionMode = true;
+            mode = Mode.ENCRYPT;
+            fileChooserButton.setText("Choose a File");
             hideElement(fileChooserButton2);
+
+                hideElement(keySelectedLabel);
+                hideElement(keyPathLabel);
+        }
+
+        if (e.getSource() == verifyRadioButton){
+            mode = Mode.VERIFY;
+            showElement(fileChooserButton2);
+            fileChooserButton.setText("Original File");
+            fileChooserButton2.setText("Encrypted File");
+
+                hideElement(keySelectedLabel);
+                hideElement(keyPathLabel);
+        }
+
+        if (e.getSource() == inspectRadioButton){
+            mode = Mode.INSPECT;
+            hideElement(fileChooserButton2);
+            fileChooserButton.setText("Choose a File");
+
+                hideElement(keySelectedLabel);
+                hideElement(keyPathLabel);
         }
 
         if (e.getSource() == fileChooserButton){
@@ -213,24 +265,43 @@ public class MyFrame extends JFrame implements ActionListener {
             try{
                 if (file == null){
                     JOptionPane.showMessageDialog(null, "Please select a file");
-                } else {
-                    if (encryptionMode){
-                        Tcrypt.encryptFile(file.getAbsolutePath());
-                        
-                        JOptionPane.showMessageDialog(null, "File Encrypted");
-                        
+                } else {                       
+                        switch (mode) {
+                        case ENCRYPT -> {
+                            startThread(file.getAbsolutePath(), this);
+                            JOptionPane.showMessageDialog(null, "File Encrypted");
+                            progressBar.setValue(0);
+                        }
 
-                    } else {
-                        if (keyFile == null){
-                            JOptionPane.showMessageDialog(null, "Please select a key");
-                        } else {
-
-                                Tcrypt.decryptFile(file.getAbsolutePath(), keyFile.getAbsolutePath());
-                                
-                                JOptionPane.showMessageDialog(null, "File Decrypted");
+                        case DECRYPT -> {
+                            if (keyFile == null){ JOptionPane.showMessageDialog(null, "Please select a key"); return;}
+                            
+                            //Tcrypt.decryptFile(file.getAbsolutePath(), keyFile.getAbsolutePath());
+                            startThread(file.getAbsolutePath(), this, keyFile.getAbsolutePath());
+                            JOptionPane.showMessageDialog(null, "File Decrypted");
                             }
-                        }  
+
+                        case VERIFY -> Tcrypt.verifyFile(file.getAbsolutePath(), keyFile.getAbsolutePath()); // in this instance, keyfile is the .tcrt file!!! It's chuffed, but it works
+                        
+                        case INSPECT -> {
+                            String[] info = Tcrypt.inspectFileHeader(file.getAbsolutePath());
+                            JOptionPane.showMessageDialog(null, "File info:\nHeader: " + info[0]
+                                    + "\nOriginal File name: " + info[1]
+                                    + "\nEncrypted in Tcrypt Format Version: " + info[2]
+                                    + "\nStored Hash: " + info[3]
+                                    + "\nEncrypted Filesize: " + info[4] + "kb");
+                                
+
+                                    IO.println("Stored Hash: " + info[5]);
+                        }
+                    
+                        default -> {
+                            Log.log("No Mode option Selected", Level.SEVERE);
+                            JOptionPane.showMessageDialog(null, "No option selected\nSelect en/decrypt or verify");
+                        }
                     }
+                    }  
+                    
             }
             catch (HeadlessException f){
             IO.println(f);
@@ -266,6 +337,49 @@ private void setElementText(JLabel label, String text){
     repaint();
 }
 
+private static void startThread(String filePath, MyFrame myFrame){
+    SwingWorker swingWorker = new SwingWorker(){
+        
+        @Override
+        protected String doInBackground() throws Exception{
+                Tcrypt.encryptFile(filePath, myFrame);
+            return "1"; // stupid, should be void
+        }
+        protected void process(){
+         myFrame.progressBar.setValue(barValue);   
+        }
+    };
+    swingWorker.execute();
+}
+
+private static void startThread(String filePath, MyFrame myFrame, String keyPath){
+    SwingWorker swingWorker = new SwingWorker(){
+        
+        @Override
+        protected String doInBackground() throws Exception{
+                Tcrypt.decryptFile(filePath, keyPath, myFrame);
+            return "1";
+        }
+        protected void process(){
+         myFrame.progressBar.setValue(barValue);   
+        }
+    };
+    swingWorker.execute();
+}
+
+
+public void setProgressBar(int value) {
+    SwingUtilities.invokeLater(() -> {
+        progressBar.setValue(value);
+    });
+}
+
+enum Mode{
+    ENCRYPT,
+    DECRYPT,
+    VERIFY,
+    INSPECT
+}
 
     
 }
