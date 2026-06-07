@@ -15,9 +15,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import tcrypt.gui.MyFrame;
 import tcrypt.util.Log;
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+
 
 public class Tcrypt {
     private static final byte[] MAGIC = "TCRYPT".getBytes(StandardCharsets.UTF_8); // so only TCRYPT files may be
@@ -375,72 +373,6 @@ public class Tcrypt {
         }
     }
 
-    private static String hashFile(String filePath) throws Exception {
-
-        final String ALGORITHM = "SHA-256";
-        final int BUFFER_SIZE = 8192;
-        MessageDigest digest = MessageDigest.getInstance(ALGORITHM);
-
-        File file = new File(filePath);
-
-        try (FileInputStream fis = new FileInputStream(file)) {
-            byte[] buffer = new byte[BUFFER_SIZE];
-            int read;
-
-            while ((read = fis.read(buffer)) != -1) {
-                digest.update(buffer, 0, read);
-            }
-        }
-        StringBuilder sb = new StringBuilder();
-
-        byte[] bytes = digest.digest();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-
-        return sb.toString();
-    }
-
-    private static File getAvailableFile(String filePath) {
-
-        File file = new File(filePath);
-
-        if (!file.exists()) {
-            return file;
-        }
-
-        String name = file.getName();
-        String parent = file.getParent();
-
-        int dot = name.lastIndexOf('.');
-
-        String baseName;
-        String extension;
-
-        if (dot == -1) {
-            baseName = name;
-            extension = "";
-        } else {
-            baseName = name.substring(0, dot);
-            extension = name.substring(dot);
-        }
-
-        int counter = 1;
-
-        while (true) {
-
-            String newName = baseName + " (" + counter + ")" + extension;
-
-            File candidate = parent == null ? new File(newName) : new File(parent, newName);
-
-            if (!candidate.exists()) {
-                return candidate;
-            }
-
-            counter++;
-        }
-    }
-
     public static void verifyFile(String filepath, String encryptedFilePath) {
         try {
             Log.log("Verifying file integrity: " + filepath + " Against: " + encryptedFilePath, Level.INFO);
@@ -533,6 +465,72 @@ public class Tcrypt {
             raf.readFully(hashBytes);
 
             return new String(hashBytes, StandardCharsets.UTF_8);
+        }
+    }
+
+    private static String hashFile(String filePath) throws Exception {
+
+        final String ALGORITHM = "SHA-256";
+        final int BUFFER_SIZE = 8192;
+        MessageDigest digest = MessageDigest.getInstance(ALGORITHM);
+
+        File file = new File(filePath);
+
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int read;
+
+            while ((read = fis.read(buffer)) != -1) {
+                digest.update(buffer, 0, read);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+
+        byte[] bytes = digest.digest();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+
+        return sb.toString();
+    }
+
+    private static File getAvailableFile(String filePath) {
+
+        File file = new File(filePath);
+
+        if (!file.exists()) {
+            return file;
+        }
+
+        String name = file.getName();
+        String parent = file.getParent();
+
+        int dot = name.lastIndexOf('.');
+
+        String baseName;
+        String extension;
+
+        if (dot == -1) {
+            baseName = name;
+            extension = "";
+        } else {
+            baseName = name.substring(0, dot);
+            extension = name.substring(dot);
+        }
+
+        int counter = 1;
+
+        while (true) {
+
+            String newName = baseName + " (" + counter + ")" + extension;
+
+            File candidate = parent == null ? new File(newName) : new File(parent, newName);
+
+            if (!candidate.exists()) {
+                return candidate;
+            }
+
+            counter++;
         }
     }
 
