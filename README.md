@@ -17,6 +17,9 @@ cd Tcrypt
 java -jar tcrypt.jar
 ```
 
+## Build from source
+To build the project, simply execute the build script called 'build.sh'. It will replace the old jar file with a newly built one, alongside each individual class in the 'out' directory
+
 ## Usage
 To use tcrypt, first initiate the live tcrypt application by typing
 ```
@@ -31,7 +34,6 @@ To decrypt the File, type
 ```
 D [.tcrt file] [.tkey file]
 ```
-This generates a .tmsg file, which is simply the original file, but with an extra extension as to not accidentally overwrite existing files.
 To quit Tcrypt, type q or exit.
 
 ## Alternatively
@@ -39,7 +41,7 @@ If you rather like graphical applications, you can run
 ```
 tcrypt --gui
 ```
-or hit "g" once you are in the cli
+or hit "g" once you are in the live environment
 
 On top of that, you can also call functions directly. Example:
 ```
