@@ -80,6 +80,7 @@ public class Tcrypt {
             }
 
             if (prompt.toLowerCase().startsWith("g")) {
+                @SuppressWarnings("unused")
                 MyFrame myFrame = new MyFrame();
 
             }
@@ -118,6 +119,7 @@ public class Tcrypt {
 
             }
         }
+        scanner.close();
 
     }
 
@@ -249,6 +251,7 @@ public class Tcrypt {
                                 Supported: %d
                                 """
                                 .formatted(TcryptFormatVersion, TcryptVersion));
+                                fileInput.close();
                 return;
             }
 
@@ -358,6 +361,9 @@ public class Tcrypt {
             // keyInput.close();
 
             IO.println("Decryption complete!");
+
+            fileInput.close();
+
             long end = System.nanoTime();
             Log.log("Decryption OK!", Level.INFO);
             Log.log("Decrypted Format Version: " + TcryptFormatVersion + " Tcrypt Version: " + TcryptVersion,
@@ -431,6 +437,8 @@ public class Tcrypt {
                 Log.log("File is not a Tcrypt file", Level.WARNING);
                 IO.println("File was not encrypted with Tcrypt");
                 JOptionPane.showMessageDialog(null, "File was not encrypted with Tcrypt!");
+                fileInput.close();
+                throw new Exception("File was not encrypted with Tcrypt");
             }
 
             File f = new File(filepath);
@@ -442,6 +450,8 @@ public class Tcrypt {
             ret[3] = getStoredHash(filepath).substring(0, 16) + "...";
             ret[4] = String.valueOf(fileSize / 1000);
             ret[5] = getStoredHash(filepath); // to display full hash in console
+            
+            fileInput.close();
 
             return ret;
 
@@ -529,6 +539,7 @@ public class Tcrypt {
             if (!candidate.exists()) {
                 return candidate;
             }
+            
 
             counter++;
         }

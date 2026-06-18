@@ -280,13 +280,15 @@ public class MyFrame extends JFrame implements ActionListener {
 
                         case INSPECT -> {
                             String[] info = Tcrypt.inspectFileHeader(file.getAbsolutePath());
-                            JOptionPane.showMessageDialog(null, "File info:\nHeader: " + info[0]
-                                    + "\nOriginal File name: " + info[1]
-                                    + "\nEncrypted in Tcrypt Format Version: " + info[2]
-                                    + "\nStored Hash: " + info[3]
-                                    + "\nEncrypted Filesize: " + info[4] + "kb");
+                            if  (info[0] != null && info[1] != null){
+                                JOptionPane.showMessageDialog(null, "File info:\nHeader: " + info[0]
+                                        + "\nOriginal File name: " + info[1]
+                                        + "\nEncrypted in Tcrypt Format Version: " + info[2]
+                                        + "\nStored Hash: " + info[3]
+                                        + "\nEncrypted Filesize: " + info[4] + "kb");
 
-                            IO.println("Stored Hash: " + info[5]);
+                                IO.println("Stored Hash: " + info[5]);
+                            }
                         }
 
                         default -> {
@@ -329,7 +331,8 @@ public class MyFrame extends JFrame implements ActionListener {
     }
 
     private static void startThread(String filePath, MyFrame myFrame) {
-        SwingWorker swingWorker = new SwingWorker() {
+        @SuppressWarnings("rawtypes")
+        SwingWorker<?, ?> swingWorker = new SwingWorker() {
 
             @Override
             protected String doInBackground() throws Exception {
@@ -337,6 +340,7 @@ public class MyFrame extends JFrame implements ActionListener {
                 return "1"; // stupid, should be void
             }
 
+            @SuppressWarnings("unused")
             protected void process() {
                 myFrame.progressBar.setValue(barValue);
             }
@@ -345,7 +349,8 @@ public class MyFrame extends JFrame implements ActionListener {
     }
 
     private static void startThread(String filePath, MyFrame myFrame, String keyPath) {
-        SwingWorker swingWorker = new SwingWorker() {
+        @SuppressWarnings("rawtypes")
+        SwingWorker<?,?> swingWorker = new SwingWorker() {
 
             @Override
             protected String doInBackground() throws Exception {
@@ -353,6 +358,7 @@ public class MyFrame extends JFrame implements ActionListener {
                 return "1";
             }
 
+            @SuppressWarnings("unused")
             protected void process() {
                 myFrame.progressBar.setValue(barValue);
             }
