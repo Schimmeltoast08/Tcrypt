@@ -17,6 +17,11 @@ cd Tcrypt
 java -jar tcrypt.jar
 ```
 
+## The easy way
+To make it easy, simply download the AppImage either directly from here or git clone the repository and then open the AppImage.
+For those who wish to make their own AppImage, the application-branch folder contains a script to build it yourself.
+The AppImage is by default the Desktop Application version, though if you want the cli version of it, you can remove the "if(1==1)" from application-branch/src/crypto/Tcrypt.java and recompile the binary (dependancy: appimagetool)
+
 ## Build from source
 To build the project, simply execute the build script called 'build.sh'. It will replace the old jar file with a newly built one, alongside each individual class in the 'out' directory
 
