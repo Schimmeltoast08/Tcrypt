@@ -27,6 +27,17 @@ public class Tcrypt {
 
     public static void main(String[] args) {
 
+
+        if (System.getProperty("java.home") == null) { // for graalVM to stop wrong font linkage
+            System.setProperty("java.home", System.getProperty("user.dir", "."));
+        }
+
+
+
+
+
+
+
         if (args.length > 0 && args[0].equals("--gui")) {
             javax.swing.SwingUtilities.invokeLater(() -> new MyFrame());
             return;
