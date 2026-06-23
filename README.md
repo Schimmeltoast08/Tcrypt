@@ -2,6 +2,9 @@
 Tcrypt is a simple encryption tool that is very simple, yet very strong.
 It has nearly unbreakable encryption thanks to the XOR Process, but it is slow and generates a key file!
 To decrypt the message, you must safely send someone the decryption key, which is the main limiting factor. **Do not use for any important Communication**
+<img width="990" height="365" alt="tcrypt-main-menu" src="https://github.com/user-attachments/assets/5cb8d1cb-6097-4481-8179-f1e466515806" />
+<img width="509" height="307" alt="tcrypt-file-selector" src="https://github.com/user-attachments/assets/9f4dfa91-65df-4f95-bb5d-383b13919243" />
+
 
 ## Install (Linux-only)
 ```
